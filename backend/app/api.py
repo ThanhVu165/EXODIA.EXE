@@ -285,3 +285,15 @@ async def backfill_evaluations(request: Request, retry_failed: bool = False, lim
     except ServiceError as e:
         return err(e)
     return await satisfaction.backfill(ctx, limit=limit, retry_failed=retry_failed)
+
+
+# ---------------------------------------------------------------------- Báo cáo vận hành (xác định, không LLM)
+from . import ops_report  # noqa: E402
+
+
+@router.get("/reports/operations")
+async def report_operations(request: Request, day: date | None = None, include_demo: bool = False):
+    try:
+        return await ops_report.operations_report(ctx_of(request), day or _vn_today(), include_demo=include_demo)
+    except ValueError as e:
+        return JSONResponse({"error": {"code": "BAD_DAY", "message": str(e)}}, status_code=400)

@@ -122,3 +122,13 @@ CREATE TABLE IF NOT EXISTS satisfaction_evaluations (
     CHECK ((status = 'COMPLETED') = (score IS NOT NULL))
 );
 CREATE INDEX IF NOT EXISTS sat_eval_time_idx ON satisfaction_evaluations (evaluated_at DESC);
+
+-- Báo cáo vận hành: cho phép dữ liệu demo giả lập có nhãn riêng (DEMO_SEED), tách khỏi PUBLIC và VERIFY.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cases_source_check'
+                   AND pg_get_constraintdef(oid) LIKE '%DEMO_SEED%') THEN
+        ALTER TABLE cases DROP CONSTRAINT IF EXISTS cases_source_check;
+        ALTER TABLE cases ADD CONSTRAINT cases_source_check CHECK (source IN ('PUBLIC', 'VERIFY', 'DEMO_SEED'));
+    END IF;
+END $$;
