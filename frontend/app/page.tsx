@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AuditTable, CaseDetail, DecisionBadge, OutboxTable } from "../components/CaseView";
 import { ProcessForm } from "../components/ProcessForm";
+import { SatisfactionPanel } from "../components/SatisfactionPanel";
 import { VerifyPanel } from "../components/VerifyPanel";
 import { api, ApiError, fmtTime, Json, REASON_VI, STATUS_VI } from "../lib/api";
 
@@ -11,6 +12,7 @@ const TABS = [
   ["hang-cho", "Hàng chờ nhân viên DSA"],
   ["outbox", "Outbox"],
   ["verify", "Verify"],
+  ["danh-gia", "Đánh giá phản hồi (dự đoán)"],
   ["audit", "Nhật ký kiểm toán"],
 ] as const;
 
@@ -51,7 +53,7 @@ function PauseSwitch() {
       <span className={`badge ${sys.paused ? "b-ERROR" : "b-AUTO"}`}>{sys.paused ? "ĐANG TẠM DỪNG" : "Đang chạy tự động"}</span>
       <input type="text" style={{ width: 200 }} placeholder="Lý do (bắt buộc)" value={reason} onChange={(e) => setReason(e.target.value)} />
       <button className={sys.paused ? "" : "danger"} disabled={busy} onClick={toggle}>{sys.paused ? "Mở lại" : "Dừng hệ thống (Stop)"}</button>
-      <span className="muted">AI hôm nay: {sys.budget.public_used}/{sys.budget.public_cap} · Verify {sys.budget.verify_used}/{sys.budget.verify_cap}</span>
+      <span className="muted">AI hôm nay: {sys.budget.public_used}/{sys.budget.public_cap} · Verify {sys.budget.verify_used}/{sys.budget.verify_cap} · Chấm {sys.budget.eval_used}/{sys.budget.eval_cap}</span>
       {err && <span className="muted">{err}</span>}
     </div>
   );
@@ -147,6 +149,7 @@ export default function Home() {
         {tab === "hang-cho" && <div className="card"><h2>Hàng chờ nhân viên DSA</h2><p className="muted">Ca chờ người quyết định và ca lỗi kỹ thuật. Dữ liệu Verify không hiển thị ở đây.</p><CaseList key={refresh} view="queue" onOpen={open} /></div>}
         {tab === "outbox" && <div className="card"><h2>Outbox</h2><OutboxTab onOpen={open} /></div>}
         {tab === "verify" && <VerifyPanel onOpen={open} />}
+        {tab === "danh-gia" && <SatisfactionPanel onOpen={open} />}
         {tab === "audit" && <div className="card"><h2>Nhật ký kiểm toán</h2><AuditTab onOpen={open} /></div>}
       </main>
     </>
