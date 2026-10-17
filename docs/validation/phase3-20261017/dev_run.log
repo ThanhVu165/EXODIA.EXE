@@ -1,0 +1,14 @@
+C01: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 12322ms
+C02: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 10879ms
+C03: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 11647ms
+C05: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 13556ms
+C06: FAIL | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: ['4. must_cite'] | 12243ms
+C07: PASS | thực=ESCALATE/UNKNOWN_FACT flags=[] | kỳ vọng=ESCALATE/UNKNOWN_FACT | lỗi: - | 12166ms
+C09: FAIL | thực=ESCALATE/OUT_OF_POLICY flags=[] | kỳ vọng=ESCALATE/REQUIRES_HUMAN_AUTHORITY | lỗi: ['2. reason_primary'] | 20638ms
+C10: FAIL | thực=ESCALATE/OUT_OF_POLICY flags=[] | kỳ vọng=ESCALATE/OUT_OF_POLICY | lỗi: ['6. handoff_question'] | 14299ms
+C12: FAIL | thực=None/None flags=['SUSPECT_INPUT'] | kỳ vọng=ESCALATE/REQUIRES_HUMAN_AUTHORITY | lỗi: ['0. không lỗi kỹ thuật', '1. decision', '2. reason_primary', '6. handoff_question'] | 23875ms
+C14: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 12604ms
+C15: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 13293ms
+
+Bắt đầu 2026-10-17T06:15:06.211633+00:00; xong 2026-10-17T06:17:43.734049+00:00
+Đạt 7/11; tổng token 94297

@@ -1,0 +1,15 @@
+{
+  "tested_commit": "77e73ed0258cccadca7f602c99358eebd5dead22",
+  "deployment_id": "1200f92d-bf59-4086-9c42-047c19cf1c14",
+  "deployment_status": "SUCCESS",
+  "url": "https://exodiaexe-production.up.railway.app",
+  "mode": "LIVE OpenAI + Supabase; synthetic email data",
+  "model_configured": "gpt-6-luna",
+  "dev_started_at": "2026-10-17T06:15:06.211633+00:00",
+  "dev_finished_at": "2026-10-17T06:17:43.734049+00:00",
+  "dev_passed": 7,
+  "dev_total": 11,
+  "dev_recorded_tokens": 94297,
+  "token_limit_note": "C12 failed before usage was persisted; totals are incomplete and are not billing totals.",
+  "ui_limit": "GENERAL observed in persisted runs; Escalation and Controls invoked via HTTP after browser action dispatch repeatedly failed. Not proof that all three UI buttons worked."
+}

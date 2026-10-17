@@ -1,6 +1,6 @@
 # PROGRESS
 
-Cập nhật: 2026-10-17 — **Giai đoạn 1 xong phần agent làm được; DỪNG chờ người dùng duyệt.** Chưa viết nghiệp vụ.
+Cập nhật: 2026-10-17 — **Giai đoạn 2–3 đã deploy; kiểm thử LIVE phát hiện lỗi, chưa nghiệm thu.** Kết quả hiện tại ở mục cuối "Kiểm chứng mới trên Windows và Railway". Các mục trước đó là lịch sử theo môi trường/phiên chạy, không phải trạng thái hiện tại.
 
 ## Kết quả Giai đoạn 1 (Mục 5)
 
@@ -132,3 +132,91 @@ Môi trường agent không gọi được OpenAI và Supabase ⇒ mọi kiểm 
 3. Bấm 3 nút Verify trên Live URL; dán kết quả (hoặc `GET /api/verify-runs`).
 4. Chạy 4 ca hold-out (agent không có) qua ô "Xử lý email".
 5. Push lên GitHub (agent chưa push; không squash/force-push).
+
+---
+
+# Kiểm chứng mới trên Windows và Railway — 2026-10-17
+
+**ĐÃ XÁC MINH:** mã nghiệp vụ từ `4e03a14`, đóng gói/deploy ở `77e73ed0258cccadca7f602c99358eebd5dead22`, Railway deployment `1200f92d-bf59-4086-9c42-047c19cf1c14` SUCCESS. URL: https://exodiaexe-production.up.railway.app. OpenAI và Supabase thật; email hoàn toàn giả lập. Không sửa prompt, gate, policy, ground truth hoặc kỳ vọng để chạy kiểm tra.
+
+## Thiết lập và kiểm tra cục bộ
+
+- Đã push lịch sử `d2347f7` → `4e03a14` và tài liệu cập nhật lên `origin/main`, không squash/force-push.
+- Đã cấu hình Railway: `MAX_EMAIL_CHARS=4000`, `LLM_DAILY_CAP=300`, `VERIFY_DAILY_CAP=60`, `RATE_PER_IP_PER_MIN=6`, `LEASE_SECONDS=180`; giữ key/model/DB hiện có. Hai đơn giá bỏ trống, không tự bịa giá. 1 replica, Serverless tắt, Dockerfile, health `/api/health/ready`.
+- Windows: `.\.venv\Scripts\python.exe -X utf8 -m pytest -q tests tests_extra` → **56 passed, 12 skipped** (không đặt TEST_DATABASE_URL). `npm.cmd run build` → PASS. Bốn checksum protected và tên Brief trong Git đúng manifest. `git diff --check` PASS trước commit tài liệu.
+- **CHƯA XÁC MINH lại 68/68:** lượt thử DB riêng trên Postgres 16.2/Windows không hoàn tất: lượt đầu có lỗi rồi bị ngắt khi treo; lượt khởi động lại pgserver gặp lỗi chia sẻ file `./log` / timeout pg_ctl. Chưa xác định nguyên nhân lượt test đầu; không quy lỗi này cho code sản phẩm. Đã dừng đúng Postgres của lượt thử, không xóa dữ liệu. Con số 68 PASS ở phần lịch sử vẫn là **ĐƯỢC BÁO CÁO bởi Cowork**.
+
+## 11 ca dev qua HTTP / OpenAI thật
+
+Lệnh thật: `python scripts/run_dev_cases.py https://exodiaexe-production.up.railway.app --out docs/validation/phase3-20261017/dev_run.json` (chạy bằng venv Python trên Windows). Không có ca HTTP 429, không chạy lại để chọn kết quả đẹp. Bắt đầu 06:15:06 UTC, kết thúc 06:17:43 UTC ngày 2026-10-17.
+
+| Ca | Kết quả | Quyết định / lý do thực tế | Kiểm tra không đạt |
+|---|---|---|---|
+| C01 | PASS | AUTO | — |
+| C02 | PASS | AUTO | — |
+| C03 | PASS | AUTO | — |
+| C05 | PASS | AUTO | — |
+| C06 | FAIL | AUTO | 4. must_cite |
+| C07 | PASS | ESCALATE / UNKNOWN_FACT | — |
+| C09 | FAIL | ESCALATE / OUT_OF_POLICY | 2. reason_primary |
+| C10 | FAIL | ESCALATE / OUT_OF_POLICY | 6. handoff_question |
+| C12 | FAIL | ERROR | 0. không lỗi kỹ thuật; 1. decision; 2. reason_primary; 6. handoff_question |
+| C14 | PASS | AUTO | — |
+| C15 | PASS | AUTO | — |
+
+**7/11 PASS, 4/11 FAIL; chưa nghiệm thu.** 94.297 token được ghi cho 10 ca có usage. C12 không có usage sau lỗi, nên tổng này thiếu lời gọi lỗi và không phải tổng chi phí/hóa đơn. Model trả về của các ca thành công là `gpt-6-luna`.
+
+Phân tích chỉ đọc từ kết quả và audit ([chi tiết bốn ca lỗi](docs/validation/phase3-20261017/dev-fail-details.json)):
+
+- C06: đúng AUTO nhưng chỉ cite D3.1 và D3.2.3.a; thiếu nhóm bắt buộc chứa D3.2.3.b hoặc D5.2.2.b. Gate kiểm mã tồn tại và phản hồi đủ điều kiện, không kiểm đủ các nhóm căn cứ của bộ chấm. Chưa kết luận chỉ do prompt.
+- C09: package lưu `policy_gap=true`, `asks_determination=true`, `depends_on_unknown_fact=true`, không có GAP ID. Gate ưu tiên OUT_OF_POLICY đúng theo tín hiệu đầu vào, nhưng sai lý do chính so với kỳ vọng REQUIRES_HUMAN_AUTHORITY. Cần phân tích vì sao model bật policy_gap; không sửa thứ tự gate theo mã ca.
+- C10: đúng ESCALATE/OUT_OF_POLICY, có GAP.PHULUC3, nhưng handoff_question không chứa "Phụ lục 3". Kiểm tra câu hỏi runtime chỉ bắt thiếu/ngắn/chung chung, không yêu cầu phản ánh gap cụ thể. Không thêm nhánh theo mã ca.
+- C12: `LLM_OUTPUT_INVALID`, response.incomplete vì max_output_tokens, status ERROR; cờ SUSPECT_INPUT vẫn còn, **0 outbox**. Mã mặc định giới hạn 2000; Railway có biến giới hạn nhưng connector giấu giá trị, nên chưa xác minh số runtime. Lỗi xảy ra trước quyết định gate, không được coi là ESCALATE thành công. Lượt General riêng sau đó C12 PASS; không thay thế FAIL của lượt dev bằng lượt đó.
+
+Chưa sửa chỉ dẫn hay logic nghiệp vụ. Phân tích trên mô tả đường gây lỗi đã quan sát; mọi đề xuất thay đổi phải được kiểm tra riêng, không đổi ground truth.
+
+## Verify LIVE
+
+| Bộ | Đạt | Thời lượng | Token ghi nhận | Run ID |
+|---|---|---|---|---|
+| GENERAL | 3/4 | 50181 ms | 38231 | `0a839279-1ff9-4a98-9f0c-cab1b9af6247` |
+| ESCALATION | 3/5 | 67522 ms | 48568 | `cd99282a-4514-461e-a272-402467584986` |
+| CONTROLS | 8/8 | 45263 ms | 27563 | `8037a153-f9d7-4f46-a1df-6178f26aa9f5` |
+
+General: C01/C07/C12 PASS, C06 FAIL must_cite. Escalation: C02/C05/C15 PASS, C09 FAIL reason_primary, C10 FAIL handoff_question. Chỉ kiểm tra xác định đã được chấm; các mục duyệt nội dung bằng người vẫn **CHƯA DUYỆT**.
+
+Nguồn bằng chứng: General là lượt đã xuất hiện trong `verify_runs`, được đọc qua GET `/api/verify-runs`; không ghi nhận là agent tự bấm thành công. Trình duyệt hiển thị UI Verify nhưng thao tác click/Enter bị lỗi dispatch/selector. Sau khi kiểm tra không có lượt trùng, agent chạy Escalation và Controls bằng POST `/api/verify/escalation` và `/api/verify/controls`. **Chưa xác minh được thao tác đủ ba nút bằng trình duyệt.** Chụp ảnh cuối qua CDP cũng timeout, không có ảnh kết quả để bàn giao.
+
+Controls 8/8 trên Supabase thật: 1 ca/1 outbox khi replay; khác nội dung bị service từ chối 409; khóa mới có NGHI_TRUNG; hook lỗi finalize rollback về 0 outbox rồi retry có 1; Stop → PENDING_HUMAN/PAUSED; Hủy có audit; Override làm bản cũ SUPERSEDED và thêm CORRECTION; audit đủ trường. Các mục 1–3,5–8 ở mode=service, mục 4 mode=in-process. Dù POST để khởi động bộ Verify đi qua HTTP, **các bước kiểm tra bên trong không đi qua API HTTP như prompt yêu cầu**; 8/8 không chứng minh hợp đồng HTTP. Chưa có duyệt ngoại lệ mới từ người dùng.
+
+Kết thúc: `/api/health/ready` HTTP 200; `/api/smoke/db` HTTP 404 (đã tắt); `paused=false`, public_used=11/300, verify_used=12/60. Bằng chứng JSON lưu trong `docs/validation/phase3-20261017/`.
+
+## Hạ tầng Phase 1 đã kiểm trong phiên Codex trước
+
+Đối chiếu log thật tại `.pytest_cache/railway-validation/` (ignored, không chứa trong Git): S1/S2/S3/S4/S5/S8 PASS ở `cf7b207`; S4 requested/returned `gpt-6-luna`, 3153 ms, 583 token; oldest_id `bd423d27-e5e7-4738-9e7a-3f634ed56ec0` còn sau redeploy (5 dòng). S7 bundle PASS, image secret scan NOT RUN. **S6 FAIL:** 4 probe, max **1835 ms**, ngưỡng 1000 ms. Log proxy 1–5 ms không thay thế số đo từ client. Lịch sử Cowork ghi người dùng cho qua S6; ngoại lệ đó là trạng thái được báo cáo, không phải PASS kỹ thuật. Chưa đo lại S6 ở bản nghiệp vụ mới, không tự thêm chẩn đoán/hạ ngưỡng.
+
+## Phần còn lại / quyết định
+
+- Bốn ca hold-out C04/C08/C11/C13: **NOT RUN**, do người giữ bộ ca tự nhập; agent không nhận/tìm/đoán nội dung.
+- Cần người dùng quyết định chấp nhận Controls ở tầng service hay giữ yêu cầu HTTP. Hiện trạng chưa đáp ứng yêu cầu HTTP; không tự phê duyệt thay chủ sản phẩm.
+- Có thể tiếp tục phân tích chỉ đọc các ca lỗi trước khi sửa prompt. Chưa thay chỉ dẫn, cấu hình token hay logic; không điều chỉnh theo mã ca, không sửa kỳ vọng.
+- Giao diện nhân viên chưa có đăng nhập; người biết URL có thể Stop/Hủy/Override. Controls bật Stop thật, nên chạy tách khỏi xử lý email khác.
+
+## Đầu ra nguyên trạng của lượt dev LIVE
+
+```text
+C01: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 12322ms
+C02: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 10879ms
+C03: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 11647ms
+C05: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 13556ms
+C06: FAIL | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: ['4. must_cite'] | 12243ms
+C07: PASS | thực=ESCALATE/UNKNOWN_FACT flags=[] | kỳ vọng=ESCALATE/UNKNOWN_FACT | lỗi: - | 12166ms
+C09: FAIL | thực=ESCALATE/OUT_OF_POLICY flags=[] | kỳ vọng=ESCALATE/REQUIRES_HUMAN_AUTHORITY | lỗi: ['2. reason_primary'] | 20638ms
+C10: FAIL | thực=ESCALATE/OUT_OF_POLICY flags=[] | kỳ vọng=ESCALATE/OUT_OF_POLICY | lỗi: ['6. handoff_question'] | 14299ms
+C12: FAIL | thực=None/None flags=['SUSPECT_INPUT'] | kỳ vọng=ESCALATE/REQUIRES_HUMAN_AUTHORITY | lỗi: ['0. không lỗi kỹ thuật', '1. decision', '2. reason_primary', '6. handoff_question'] | 23875ms
+C14: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 12604ms
+C15: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 13293ms
+
+Bắt đầu 2026-10-17T06:15:06.211633+00:00; xong 2026-10-17T06:17:43.734049+00:00
+Đạt 7/11; tổng token 94297
+```

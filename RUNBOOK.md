@@ -99,7 +99,9 @@ Không đặt `TEST_DATABASE_URL` thì các test DB bị skip (pytest ghi rõ "s
 python scripts/run_dev_cases.py https://<app>.up.railway.app --out dev_run.json
 # hoặc với server cục bộ: python scripts/run_dev_cases.py http://127.0.0.1:8000
 ```
-Mỗi ca có thể tốn 1–2 lượt AI (tính vào `LLM_DAILY_CAP`); ca bị tiền lọc có thể không gọi AI. Dán bảng in ra nguyên trạng vào PROGRESS.md. Script trả exit code 0 khi chạy xong kể cả có ca FAIL: phải đọc từng dòng và trường `passed` trong JSON, không dùng exit code làm kết luận chất lượng.
+Mỗi ca mới đang chạy có thể tốn 1–2 lượt AI (tính vào `LLM_DAILY_CAP`), kể cả khi tiền lọc nghi injection: tiền lọc gắn cờ, không tự bỏ qua lời gọi AI. Khi tạm dừng, hệ thống không gọi AI. Dán bảng in ra nguyên trạng vào PROGRESS.md. Script trả exit code 0 khi chạy xong kể cả có ca FAIL: phải đọc từng dòng và trường `passed` trong JSON, không dùng exit code làm kết luận chất lượng.
+
+Nếu gặp `LLM_OUTPUT_INVALID` với `response.incomplete` / `max_output_tokens`, giữ nguyên ca ERROR và audit. Usage của lời gọi lỗi hiện không được lưu vào kết quả ca, nên tổng token trong báo cáo có thể thiếu và không phải hóa đơn đầy đủ. Không đổi kỳ vọng hay chạy lặp đến khi xanh; phân tích nguyên nhân trước khi thay giới hạn hoặc chỉ dẫn.
 
 Giữ giới hạn IP mặc định 6 yêu cầu/phút. Nếu gặp HTTP 429, đó là lỗi giới hạn tần suất, chưa phải kết quả phân loại; giữ lại báo cáo đầu tiên, chờ sang cửa sổ phút mới rồi dùng `--ids Cxx,Cyy --out dev_retry.json` để chạy riêng các ca bị 429. Không thay kỳ vọng hoặc tăng trần chỉ để báo PASS.
 
