@@ -15,7 +15,7 @@ git clone https://github.com/ThanhVu165/EXODIA.EXE.git && cd EXODIA.EXE
 | `DATABASE_URL` | có | Supabase **Session Pooler**, cổng **5432**, `?sslmode=require`. Cổng 6543 bị app từ chối (ready trả 503). |
 | `SMOKE_TOKEN` | chỉ khi smoke | Bật `/api/smoke/*`. Bỏ trống/xóa sau khi smoke xong để tắt các endpoint này. |
 | `LLM_TIMEOUT_S` | không | Mặc định 60. |
-| `LLM_MAX_OUTPUT_TOKENS` | không | Mặc định 2000. |
+| `LLM_MAX_OUTPUT_TOKENS` | không | Mặc định 6000 (tính cả token suy luận của model reasoning; 2000 đã gây cắt cụt). Trên Railway phải kiểm tra biến này không còn 2000. |
 | `MAX_EMAIL_CHARS` | không | Mặc định 4000. |
 | `LLM_DAILY_CAP` | không | Trần toàn cục lượt gọi AI/ngày cho email công khai (mặc định 300) — hàng rào chi phí thật. |
 | `VERIFY_DAILY_CAP` | không | Hạn mức riêng của Verify (mặc định 60 lượt AI/ngày; một lần bấm đủ 3 nút ≈ 12–20 lượt). |

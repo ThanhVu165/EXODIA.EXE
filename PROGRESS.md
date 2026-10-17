@@ -220,3 +220,31 @@ C15: PASS | thực=AUTO/None flags=[] | kỳ vọng=AUTO/None | lỗi: - | 13293
 Bắt đầu 2026-10-17T06:15:06.211633+00:00; xong 2026-10-17T06:17:43.734049+00:00
 Đạt 7/11; tổng token 94297
 ```
+
+
+---
+
+# Sửa sau phân tích lỗi 11 ca dev — 2026-10-17 (người dùng đã duyệt đề xuất)
+
+**Trạng thái: mã đã sửa, test xác định pass; CHƯA chạy lại với OpenAI thật** (môi trường agent bị chặn). Kết quả 7/11, General 3/4, Escalation 3/5 ở trên vẫn là kết quả của bản trước; không thay thế.
+
+Nguyên nhân gốc (đọc từ `docs/validation/phase3-20261017/dev-fail-details.json`) và thay đổi:
+
+| Ca | Nguyên nhân gốc | Thay đổi | Loại |
+|---|---|---|---|
+| C12 | `max_output_tokens=2000` tính cả token suy luận của model reasoning; đầu ra bị cắt (`response.incomplete`). C09 dùng 1561 token đầu ra cho một JSON ngắn ⇒ rủi ro chung cho mọi ca, không riêng C12. | Mặc định `LLM_MAX_OUTPUT_TOKENS` = 6000 (code + `.env.example`). Railway phải đổi biến nếu đang đặt 2000. | Cấu hình |
+| C12 (phụ) | Lời gọi AI lỗi không có dòng audit và mất dấu lượt đã tính ngân sách. | Thêm audit `AGENT_CALL_FAILED` (mã lỗi, lượt thử, trần token; ghi rõ usage không lấy được từ lỗi SDK). | Code |
+| C09 | AI đặt `policy_gap=true` (không có mã GAP) vì "quy chế không có điều khoản ngoại lệ", và `depends_on_unknown_fact=true` dù dữ kiện thiếu không đổi tuyến xử lý. | Chỉ dẫn: (1) không có điều khoản ngoại lệ ≠ khoảng trống; xin ngoại lệ ⇒ `asks_determination`; (2) `depends_on_unknown_fact` chỉ true khi dữ kiện thiếu làm đổi hướng/tuyến xử lý của DSA. Gate KHÔNG đổi. | Chỉ dẫn (quy tắc chung) |
+| C10 | Chỉ dẫn không yêu cầu câu hỏi nêu nội dung bị dẫn chiếu mà thiếu. | Chỉ dẫn (3): khi `policy_gap`, câu hỏi phải gọi đúng tên nội dung quy chế dẫn chiếu mà không có và hỏi đúng thông tin thiếu. | Chỉ dẫn (quy tắc chung) |
+| C06 | AI chỉ trích bước "lần đầu", thiếu bước tiếp theo. Kỳ vọng `must_cite` có thể tranh luận (email chỉ hỏi lần đầu) — chỉ báo cáo, không sửa ground truth. | **Không sửa** (quy tắc "nêu bước tiếp theo" dễ thành dạy theo đề; người dùng chưa chọn). Dự kiến vẫn FAIL. | — |
+
+Không quy tắc nào nhắc mã ca hoặc chép email ground truth. Lưu ý trung thực: ví dụ "con số thực tế sau khi loại trừ theo quy chế" trong định nghĩa `depends_on_unknown_fact` (viết từ bản trước) được agent viết sau khi đã đọc bộ ca dev, nên có thể mang ảnh hưởng của C07.
+
+**Controls qua HTTP:** bước 1–3, 5–8 nay gửi HTTP thật tới các route của chính ứng dụng (httpx `ASGITransport` trong tiến trình — đi qua đúng routing/validation/handler FastAPI), rồi đếm dòng DB. Bước 4 vẫn chèn lỗi bằng hook trong tiến trình, phần retry đi qua `POST /api/cases/{id}/retry`. Lời gọi nội bộ được nhận diện bằng một khóa trong ASGI scope do bộ bọc nội bộ đặt (không phải header/IP), nên client bên ngoài không giả mạo được; test chứng minh request ngoài gửi header cùng tên vẫn là `PUBLIC`. Lời gọi nội bộ được miễn giới hạn IP và tính vào hạn mức `llm:verify`. Không đi qua mạng/proxy Railway.
+
+Bằng chứng (VM agent, Postgres 16 cục bộ): `python -m pytest -q tests tests_extra` → **69 passed**; `smoke_local.py` 11/11 PASS.
+
+## Việc người dùng cần làm (theo thứ tự)
+1. Nếu muốn số đo khái quát hóa sạch: chạy 4 ca hold-out trên bản đang deploy (`f3d8876`) TRƯỚC khi deploy bản sửa, ghi kết quả.
+2. Railway: đặt `LLM_MAX_OUTPUT_TOKENS=6000` (hoặc xóa biến để dùng mặc định), deploy commit mới.
+3. Chạy lại `python scripts/run_dev_cases.py <URL> --out docs/validation/<ngày>/dev_run.json`, 3 nút Verify, rồi 4 ca hold-out; dán kết quả. So với bảng cũ, đặc biệt C07 (quy tắc mới về `depends_on_unknown_fact` có thể làm lật).

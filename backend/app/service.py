@@ -229,7 +229,19 @@ async def _run_agent_with_retry(ctx: Ctx, case: dict, body: str, bucket: str) ->
     feedback = None
     for attempt in (1, 2):   # tối đa MỘT lần retry có chủ đích
         await _consume_llm(ctx, bucket)
-        result = await ctx.agent.run(body, feedback)
+        try:
+            result = await ctx.agent.run(body, feedback)
+        except AgentTechnicalError as exc:
+            # Ghi audit cả lời gọi AI thất bại (lượt đã tính vào ngân sách; usage không lấy được từ lỗi SDK).
+            async with ctx.db.connection() as conn:
+                async with conn.transaction():
+                    await audit(conn, ctx, case, "AGENT_CALL_FAILED", reason=f"{exc.code}: {exc.detail[:300]}",
+                                before="PROCESSING", after="PROCESSING", key=case["submission_key"],
+                                model_id=ctx.settings.openai_model,
+                                details={"attempt": attempt, "error_code": exc.code,
+                                         "usage": "không lấy được từ lỗi SDK; lượt gọi đã tính vào ngân sách",
+                                         "max_output_tokens": ctx.settings.llm_max_output_tokens})
+            raise
         for k, v in result.usage.items():
             usage_total[k] = usage_total.get(k, 0) + v
         code_errors, content_errors = validate(result.output, ctx.policy)

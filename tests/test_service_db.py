@@ -120,6 +120,8 @@ def test_technical_errors_never_auto(test_db_url):
         ctx = await make_ctx(test_db_url, FixedAgent(error=AgentTechnicalError("LLM_TIMEOUT", "x")))
         case, _ = await service.process_email(ctx, body=body(), sender=None, key=str(uuid.uuid4()))
         assert case["status"] == "ERROR" and case["error_code"] == "LLM_TIMEOUT"
+        d = await service.case_detail(ctx, case["id"])
+        assert [a["action"] for a in d["audit"]][-2:] == ["AGENT_CALL_FAILED", "TECHNICAL_ERROR"]
         assert await count(ctx, "SELECT count(*) n FROM outbox WHERE case_id=%s", case["id"]) == 0
         await ctx.db.close()
         ctx = await make_ctx(test_db_url, FixedAgent(), llm_daily_cap=0)

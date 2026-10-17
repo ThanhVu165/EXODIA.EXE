@@ -41,7 +41,7 @@ def load_settings() -> Settings:
         frontend_dir=Path(frontend),
         smoke_token=os.environ.get("SMOKE_TOKEN") or None,
         llm_timeout_s=float(os.environ.get("LLM_TIMEOUT_S", "60")),
-        llm_max_output_tokens=int(os.environ.get("LLM_MAX_OUTPUT_TOKENS", "2000")),
+        llm_max_output_tokens=int(os.environ.get("LLM_MAX_OUTPUT_TOKENS", "6000")),
         max_email_chars=int(os.environ.get("MAX_EMAIL_CHARS", "4000")),
         llm_daily_cap=int(os.environ.get("LLM_DAILY_CAP", "300")),
         verify_daily_cap=int(os.environ.get("VERIFY_DAILY_CAP", "60")),

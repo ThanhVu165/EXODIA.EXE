@@ -7,7 +7,7 @@ from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from . import budget, service
+from . import budget, service, verify
 from .service import Ctx, ServiceError, to_json
 
 router = APIRouter(prefix="/api")
@@ -57,10 +57,19 @@ async def rate_limit(request: Request, ctx: Ctx, scope: str, per_min: int) -> No
 async def submit_email(payload: EmailIn, request: Request,
                        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
     ctx = ctx_of(request)
+    # Lời gọi nội bộ của bảng kiểm tra điều khiển Verify: dấu hiệu nằm trong ASGI scope do bộ bọc nội bộ đặt,
+    # KHÔNG đến từ header/IP nên client bên ngoài không thể giả mạo.
+    verify_run = request.scope.get(verify.INTERNAL_SCOPE_KEY)
     try:
-        await rate_limit(request, ctx, "emails", ctx.settings.rate_per_ip_per_min)
-        case, created = await service.process_email(ctx, body=payload.body, sender=payload.sender,
-                                                    key=idempotency_key or "")
+        if verify_run is None:
+            await rate_limit(request, ctx, "emails", ctx.settings.rate_per_ip_per_min)
+            case, created = await service.process_email(ctx, body=payload.body, sender=payload.sender,
+                                                        key=idempotency_key or "")
+        else:
+            case, created = await service.process_email(ctx, body=payload.body, sender=payload.sender,
+                                                        key=idempotency_key or "", source="VERIFY",
+                                                        verify_run_id=verify_run,
+                                                        budget_bucket=budget.BUCKET_LLM_VERIFY)
     except ServiceError as e:
         return err(e)
     return JSONResponse({"created": created, "case": case_view(case)}, status_code=201 if created else 200)
@@ -93,7 +102,8 @@ async def retry_case(case_id: uuid.UUID, request: Request):
     """Thử lại ca ERROR bằng CÙNG khóa idempotency của lần gửi gốc."""
     ctx = ctx_of(request)
     try:
-        await rate_limit(request, ctx, "emails", ctx.settings.rate_per_ip_per_min)
+        if request.scope.get(verify.INTERNAL_SCOPE_KEY) is None:
+            await rate_limit(request, ctx, "emails", ctx.settings.rate_per_ip_per_min)
         async with ctx.db.connection() as conn:
             case = await service.get_case(conn, case_id)
         if case is None:
@@ -194,7 +204,6 @@ async def pause(payload: PauseIn, request: Request):
 
 
 # ---------------------------------------------------------------------------------------------- Verify
-from . import verify  # noqa: E402
 
 VERIFY_PER_MIN = 4
 
@@ -208,7 +217,7 @@ async def run_verify(kind: str, request: Request):
     try:
         await rate_limit(request, ctx, "verify", VERIFY_PER_MIN)
         if kinds[kind] == "CONTROLS":
-            return await verify.run_controls(ctx)
+            return await verify.run_controls(ctx, request.app)
         return await verify.run_cases(ctx, kinds[kind])
     except ServiceError as e:
         return err(e)
