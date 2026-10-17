@@ -117,7 +117,8 @@ async def receive(ctx: Ctx, *, body: str, sender: str | None, key: str, source: 
                 cur = await conn.execute(
                     "UPDATE cases SET flags = array_append(flags, 'NGHI_TRUNG') WHERE id=%s RETURNING *", (case["id"],))
                 case = await cur.fetchone()
-            await audit(conn, ctx, case, "RECEIVED", after="RECEIVED", key=key,
+            await audit(conn, ctx, case, "RECEIVED", reason="Tiếp nhận email mới (lời sinh viên, chưa xác minh)",
+                        after="RECEIVED", key=key,
                         details={"source": source, "flags": case["flags"]})
     return case, True
 
@@ -136,7 +137,8 @@ async def claim(ctx: Ctx, case_id) -> dict | None:
                     RETURNING *""", (case_id,))
             case = await cur.fetchone()
             if case:
-                await audit(conn, ctx, case, "CLAIMED", before=before["status"], after="PROCESSING",
+                await audit(conn, ctx, case, "CLAIMED", reason=f"Bắt đầu xử lý (lần thử {case['attempts']})",
+                            before=before["status"], after="PROCESSING",
                             key=case["submission_key"], details={"attempt": case["attempts"]})
             return case
 
@@ -233,7 +235,10 @@ async def _run_agent_with_retry(ctx: Ctx, case: dict, body: str, bucket: str) ->
         code_errors, content_errors = validate(result.output, ctx.policy)
         async with ctx.db.connection() as conn:
             async with conn.transaction():
-                await audit(conn, ctx, case, "AGENT_CALLED", before="PROCESSING", after="PROCESSING",
+                await audit(conn, ctx, case, "AGENT_CALLED",
+                            reason=("Gọi trợ lý AI để trích xuất, tìm căn cứ, soạn nháp (không có quyền duyệt)"
+                                    + (f"; lỗi đầu ra: {code_errors + content_errors}" if code_errors or content_errors else "")),
+                            before="PROCESSING", after="PROCESSING",
                             key=case["submission_key"], model_id=result.model_id,
                             clause_ids=list(result.output.cites) + list(result.output.policy_gap_ids),
                             details={"attempt": attempt, "latency_ms": result.latency_ms, "usage": result.usage,
