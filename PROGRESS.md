@@ -426,3 +426,47 @@ SAT-04 (phản hồi yêu cầu bổ sung thông tin) **không áp dụng**: ph�
 **Giới hạn (cho Slide 5):** điểm là dự đoán của LLM, chưa hiệu chỉnh với nhãn của người ngoài đội; cùng model vừa trả lời
 vừa chấm ⇒ lỗi có thể tương quan; ngưỡng 70 chưa hiệu chỉnh; không có lịch tự chạy cuối ngày (báo cáo tính khi mở;
 tác vụ nền mất khi restart sẽ được chấm bù bằng nút); tác vụ nền chạy cùng tiến trình Uvicorn (S6 chưa đạt).
+
+
+---
+
+# Báo cáo vận hành tối thiểu (2026-10-17)
+
+**Phạm vi:** tab "Báo cáo vận hành", SLA quy ước demo, số liệu xác định, AI tóm tắt tùy chọn. Không đụng luồng xử lý
+email, gate, policy, ground truth, chỉ dẫn phân loại, Verify hay module đánh giá Satisfaction.
+
+**Đã làm (commit `1c7062b`, `6b4de74`, commit này):**
+- `sla.py`: hạn = 17:00 ngày làm việc thứ 3 sau D0 (giờ VN); D0 có thể là cuối tuần; bỏ T7/CN/`SLA_HOLIDAYS`; đúng mốc = đúng hạn.
+- `ops_report.py`: tính từ `cases` + `outbox` (thời điểm phản hồi đầu tiên) + `audit_log` (thời điểm hủy, hoạt động gần nhất,
+  thao tác nhân viên). Trạng thái được dựng lại tại **thời điểm tham chiếu** (cuối ngày báo cáo, hoặc hiện tại nếu là hôm nay),
+  nên báo cáo ngày cũ không bị ảnh hưởng bởi thao tác sau đó. Hoàn tất = có phản hồi trong Outbox; ERROR, ca chuyển tiếp
+  chưa trả lời, bản nháp **không** là hoàn tất; hủy thống kê riêng; loại `VERIFY`; `DEMO_SEED` chỉ khi bật.
+  Nguyên nhân chậm có bằng chứng: lỗi kỹ thuật (`error_code`), nhận khi tạm dừng (cờ `PAUSED`), kẹt quá lease; còn lại
+  "Chưa xác định" (kèm sự kiện quan sát được, ví dụ "chưa có thao tác nhân viên").
+- Tab giao diện: chọn ngày, "Tạo báo cáo", 4 nhóm số, danh sách cần xử lý, bấm mã ca mở chi tiết + audit sẵn có.
+- `scripts/seed_ops_demo.py`: chỉ THÊM 4 ca `DEMO_SEED` có nhãn "[DỮ LIỆU DEMO GIẢ LẬP]", có tuổi 2–6 ngày, audit
+  `DEMO_SEED_CREATED`; không sửa ca thật; không hiện trong hàng chờ/Outbox/Satisfaction (chỉ lấy `PUBLIC`).
+- `ops_summary.py` + `POST /api/reports/operations/summary`: một lời gọi AI trên số liệu đã tính (không gửi nội dung email);
+  code bỏ mã ca không có trong báo cáo và cảnh báo số không có trong đầu vào; hạn mức `OPS_SUMMARY_DAILY_CAP`; audit
+  `OPS_SUMMARY_GENERATED`.
+
+**Bằng chứng (VM agent, Postgres 16 cục bộ — DB test riêng, không phải DB demo):**
+- `python -m pytest -q tests tests_extra` → **91 passed**: SLA (T2→T5, tối T6, T7, CN, ngày nghỉ, đổi múi giờ từ UTC, đúng
+  mốc 17:00:00 là đúng hạn, 17:00:01 là trễ), báo cáo (ERROR còn mở, hủy riêng, quá hạn có bằng chứng PAUSED, gần hạn,
+  hoạt động gần nhất, loại VERIFY, DEMO_SEED chỉ khi bật, báo cáo ngày trước không thấy ca tạo sau), kiểm đầu ra AI.
+- Luồng demo qua HTTP thật trên server cục bộ (không có OpenAI nên email đi nhánh ERROR): nhận email → ca còn mở
+  (`open_error` +1, hạn 2026-10-21 17:00 vì nhận thứ Bảy) → nhân viên Trả lời → Outbox `HUMAN_REPLY SENT` → audit
+  `RECEIVED, CLAIMED, TECHNICAL_ERROR, STAFF_REPLIED` → báo cáo: hoàn tất +1, còn mở −1. AI tóm tắt khi chưa cấu hình:
+  HTTP 503, GET báo cáo vẫn 200. Ngày tương lai: 400.
+- Tự xem giao diện bằng Chromium headless trong môi trường agent với 4 ca DEMO_SEED: 2 ca quá hạn hiện đúng hạn
+  (14/10 và 16/10 17:00), nguyên nhân có bằng chứng, mở được chi tiết ca; lỗi console duy nhất là 503 dự kiến của AI.
+
+**Chạy thật / giả lập / chưa kiểm:**
+- Thật (cục bộ): tính SLA, số liệu, danh sách, luồng nhân viên tiếp quản → Outbox → audit → báo cáo.
+- Giả lập: ca `DEMO_SEED` (có nhãn), dữ liệu test.
+- Chưa kiểm: AI tóm tắt với OpenAI thật; chạy trên Railway/Supabase (chưa push/deploy theo yêu cầu).
+
+**Giới hạn:** SLA là quy ước demo; báo cáo đọc toàn bộ ca mỗi lần tạo (đủ cho quy mô demo, không tối ưu cho dữ liệu lớn);
+"hoàn tất" chỉ phản ánh có phản hồi trong Outbox, không phản ánh sinh viên đã được giải quyết; trạng thái hiện tại của
+ca trong danh sách là trạng thái lúc tạo báo cáo, không phải lúc tham chiếu; ngày nghỉ phải cấu hình tay;
+AI tóm tắt có thể diễn đạt sai — chỉ được kiểm mã ca và con số, không kiểm ý nghĩa câu chữ.

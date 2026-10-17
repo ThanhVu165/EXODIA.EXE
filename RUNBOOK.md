@@ -140,3 +140,20 @@ curl -X POST "https://<app>/api/evaluations/backfill?retry_failed=true"   # ch�
 python scripts/run_sat_pairs.py --runs 3 --out sat_pairs_result.json
 ```
 Schema mới (`satisfaction_evaluations`) tự áp khi app khởi động (CREATE IF NOT EXISTS).
+
+
+## Báo cáo vận hành
+
+Biến môi trường: `SLA_BUSINESS_DAYS` (3), `SLA_CUTOFF` (17:00), `SLA_HOLIDAYS` (YYYY-MM-DD,...), `OPS_SUMMARY_DAILY_CAP` (30).
+Schema: ràng buộc `cases.source` được mở rộng thêm `DEMO_SEED` (tự áp khi khởi động, idempotent).
+
+```bash
+curl "https://<app>/api/reports/operations?day=2026-10-17"                     # báo cáo xác định
+curl "https://<app>/api/reports/operations?day=2026-10-17&include_demo=true"   # kèm dữ liệu demo có nhãn
+curl -X POST https://<app>/api/reports/operations/summary -H "Content-Type: application/json" -d '{"day":"2026-10-17"}'
+# Dữ liệu demo giả lập có tuổi (chỉ THÊM ca DEMO_SEED, không đụng ca thật):
+DATABASE_URL=... python scripts/seed_ops_demo.py --confirm --batch demo1
+```
+
+Luồng demo: Xử lý email → (ca chuyển tiếp/lỗi vào Hàng chờ) → nhân viên mở ca, Trả lời → Outbox → Nhật ký kiểm toán →
+tab Báo cáo vận hành, bấm "Tạo báo cáo": ca chuyển từ "còn mở" sang "hoàn tất luồng phản hồi".

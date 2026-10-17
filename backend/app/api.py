@@ -297,3 +297,37 @@ async def report_operations(request: Request, day: date | None = None, include_d
         return await ops_report.operations_report(ctx_of(request), day or _vn_today(), include_demo=include_demo)
     except ValueError as e:
         return JSONResponse({"error": {"code": "BAD_DAY", "message": str(e)}}, status_code=400)
+
+
+class OpsSummaryIn(BaseModel):
+    day: date | None = None
+    include_demo: bool = False
+
+
+@router.post("/reports/operations/summary")
+async def report_operations_summary(payload: OpsSummaryIn, request: Request):
+    """Tính lại báo cáo xác định rồi mới gọi AI; AI lỗi => 503, không ảnh hưởng GET báo cáo."""
+    from . import ops_summary
+    from .agent import AgentTechnicalError
+    ctx = ctx_of(request)
+    try:
+        await rate_limit(request, ctx, "ops_summary", 2)
+        report = await ops_report.operations_report(ctx, payload.day or _vn_today(), include_demo=payload.include_demo)
+        async with ctx.db.connection() as conn:
+            ok = await budget.consume(conn, budget.BUCKET_LLM_OPS, "day", ctx.settings.ops_summary_daily_cap)
+        if not ok:
+            raise ServiceError(429, "BUDGET_EXCEEDED", f"Đã chạm trần {ctx.settings.ops_summary_daily_cap} lượt tóm tắt/ngày")
+        result = await ops_summary.summarize(ctx.settings, report)
+    except ServiceError as e:
+        return err(e)
+    except ValueError as e:
+        return JSONResponse({"error": {"code": "BAD_DAY", "message": str(e)}}, status_code=400)
+    except AgentTechnicalError as e:
+        return JSONResponse({"error": {"code": e.code, "message": e.detail[:300]}}, status_code=503)
+    async with ctx.db.connection() as conn:
+        await service.audit(conn, ctx, None, "OPS_SUMMARY_GENERATED",
+                            reason=f"AI tóm tắt báo cáo vận hành ngày {report['day']}", model_id=result.get("model_id"),
+                            details={"day": report["day"], "include_demo": payload.include_demo,
+                                     "dropped_refs": result["dropped_refs"],
+                                     "unverified_numbers": result["unverified_numbers"], "usage": result["usage"]})
+    return {"day": report["day"], **result}

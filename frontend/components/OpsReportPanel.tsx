@@ -122,6 +122,7 @@ export function OpsReportPanel({ onOpen }: { onOpen?: (id: string) => void }) {
                     <li key={i}>{onOpen ? <button className="linklike" onClick={() => onOpen(p.case_id)}>{String(p.case_id).slice(0, 8)}</button> : p.case_id}: {p.why}</li>
                   ))}</ol>
                 )}
+                {ai.unverified_numbers?.length > 0 && <p className="error-box">Cảnh báo: tóm tắt có con số không có trong bảng số liệu ({ai.unverified_numbers.join(", ")}) — dùng số trong bảng.</p>}
                 {ai.dropped_refs?.length > 0 && <p className="muted">Đã bỏ {ai.dropped_refs.length} gợi ý tham chiếu mã ca không có trong báo cáo.</p>}
                 <p className="muted">Model {ai.model_id || "—"} · nội dung do AI tạo, đối chiếu với bảng số liệu.</p>
               </div>

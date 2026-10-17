@@ -56,3 +56,13 @@ Giao diện nhân viên hiện không có đăng nhập; người biết URL có
   và rà soát được ghi audit.
 - Kiến trúc thật: Agent 1 nhận **toàn văn quy chế** làm ngữ cảnh (không dùng RAG); căn cứ hiển thị và căn cứ đưa cho
   Agent 2 đều do code trích nguyên văn theo mã điều khoản.
+
+
+## Báo cáo vận hành (tab "Báo cáo vận hành")
+- Số liệu **do backend tính** từ `cases`, `outbox`, `audit_log`: ca mới, ca hoàn tất luồng phản hồi (đã có phản hồi trong
+  Outbox — không đồng nghĩa vấn đề đã được giải quyết thực tế), ca còn mở, ca hủy (riêng); danh sách gần hạn/quá hạn với
+  hoạt động gần nhất, tuyến tiếp quản, nguyên nhân chậm chỉ khi có bằng chứng (nếu không: "Chưa xác định").
+- **SLA là quy ước demo**: 17:00 ngày làm việc thứ 3 sau ngày nhận (giờ Việt Nam), bỏ thứ Bảy, Chủ nhật, ngày nghỉ cấu hình.
+- Loại dữ liệu Verify; dữ liệu demo giả lập (`DEMO_SEED`, tạo bằng `scripts/seed_ops_demo.py`) chỉ hiện khi bật rõ.
+- "Tóm tắt bằng AI" là tùy chọn: một lời gọi đọc số liệu đã tính, không tính số, không hành động; mã ca lạ bị bỏ, số không
+  có trong bảng bị cảnh báo; AI lỗi thì bảng vẫn dùng được. Không có lịch tự chạy, không gửi email, không tự phân công.
