@@ -41,3 +41,18 @@ Xem `RUNBOOK.md` để nạp `.env.local`, chạy trên Windows/Linux, deploy, c
 Các test dùng FixedAgent chỉ xác minh cơ chế trạng thái, DB và audit; kết quả phân loại cần được xác minh bằng model thật. Controls hiện đi qua route HTTP bằng ASGITransport trong tiến trình; bước 4 dùng hook lỗi rồi retry qua HTTP. Bộ này không đo mạng/proxy Railway. Bốn ca hold-out do người giữ bộ ca tự chạy, không cung cấp cho agent.
 
 Giao diện nhân viên hiện không có đăng nhập; người biết URL có thể thao tác Stop/Hủy/Override. Stop hủy ca đang xử lý dở và giữ hàng chờ nhân viên. Đây là giới hạn của demo, không phải mô hình phân quyền để triển khai nghiệp vụ thật.
+
+
+## Challenge bổ sung: đánh giá mức hài lòng DỰ ĐOÁN (Agent 2)
+- Sau khi một phản hồi **tự động** được ghi outbox, backend gọi **Agent 2** (prompt riêng, lời gọi riêng, chạy nền)
+  để dự đoán mức hài lòng của sinh viên, thang 0–100, kèm giải thích và các ý còn thiếu.
+- **Điểm do AI dự đoán — không phải khảo sát sinh viên.** Không có sinh viên thật trong demo.
+- Chỉ chấm phản hồi tự động (kể cả bản về sau bị nhân viên đính chính). Không chấm ca chuyển tiếp, phản hồi do nhân
+  viên viết, hay dữ liệu Verify. Báo cáo Satisfaction **không** thay báo cáo Escalation/Verify.
+- Agent 2 **không** sửa phản hồi, không gửi thêm, không phê duyệt, không đổi prompt hay quy chế. Lỗi chấm được ghi
+  `EVALUATION_FAILED`/`INSUFFICIENT_CONTEXT`, không bao giờ thành 0 điểm.
+- Báo cáo theo ngày (giờ Việt Nam) được **tính trực tiếp khi mở** (tab "Đánh giá phản hồi (dự đoán)" hoặc
+  `GET /api/reports/daily`), không có lịch tự chạy cuối ngày. DSA chọn Đồng ý / Không đồng ý kèm nhận xét; mọi lượt chấm
+  và rà soát được ghi audit.
+- Kiến trúc thật: Agent 1 nhận **toàn văn quy chế** làm ngữ cảnh (không dùng RAG); căn cứ hiển thị và căn cứ đưa cho
+  Agent 2 đều do code trích nguyên văn theo mã điều khoản.

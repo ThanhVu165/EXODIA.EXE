@@ -1,0 +1,57 @@
+# DO AGENT VIẾT — KHÔNG PHẢI GROUND TRUTH. Dữ liệu giả lập để kiểm Agent 2 (SAT-01..03).
+# Nhãn là THỨ TỰ do đội đặt (cần người dùng duyệt): full > partial > offtopic. Không phải điểm tuyệt đối.
+# Câu hỏi nằm trong phạm vi QĐ 4002, không chép email trong ground_truth/cases_dev.yaml.
+label_owner: "đội (cần người dùng duyệt nhãn)"
+items:
+  - id: SAT-Q1
+    cites: [D4.2.transparency, D4.2.privacy, D4.3.h]
+    email: |
+      Em định dùng ChatGPT để tóm tắt tài liệu cho tiểu luận. Em phải khai báo những gì,
+      và em có được đưa dữ liệu khảo sát có thông tin cá nhân của người trả lời vào ChatGPT không ạ?
+    answers:
+      full: |
+        Chào em, khi dùng AI tạo sinh như ChatGPT, em cần ghi rõ công cụ đã dùng (kèm phiên bản), mục đích sử dụng
+        (ví dụ tóm tắt tài liệu) và những nội dung có sự hỗ trợ của AI, chẳng hạn trong phần Acknowledgement hoặc
+        Phương pháp nghiên cứu. Về dữ liệu khảo sát: quy định yêu cầu không cung cấp cho AI dữ liệu cá nhân, dữ liệu mật,
+        và việc dùng AI để xử lý dữ liệu nhạy cảm (gồm dữ liệu cá nhân) là hành vi vi phạm. Vì vậy em không nên đưa dữ liệu
+        có thông tin cá nhân của người trả lời vào ChatGPT.
+      partial: |
+        Chào em, khi dùng AI tạo sinh như ChatGPT, em cần ghi rõ công cụ đã dùng (kèm phiên bản), mục đích sử dụng
+        (ví dụ tóm tắt tài liệu) và những nội dung có sự hỗ trợ của AI, chẳng hạn trong phần Acknowledgement hoặc
+        Phương pháp nghiên cứu.
+      offtopic: |
+        Chào em, UEH sử dụng phần mềm Turnitin để kiểm tra tỷ lệ tương đồng. Ban Quản trị hạ tầng cung cấp tài khoản
+        và hỗ trợ kỹ thuật cho người học có nhu cầu.
+  - id: SAT-Q2
+    cites: [D5.2.2.a, D5.2.2.b, D5.1.who]
+    email: |
+      Giảng viên nói bài tập học phần của em có dấu hiệu dùng AI không đúng quy định. Lần đầu thì em phải làm gì,
+      và nếu sửa rồi mà vẫn bị cho là vi phạm thì sao ạ?
+    answers:
+      full: |
+        Chào em, theo quy định, việc đánh giá vi phạm sử dụng AI do giảng viên phụ trách thực hiện. Khi bị phát hiện vi phạm
+        lần đầu, người học phải chỉnh sửa và nộp lại bài theo yêu cầu của giảng viên. Nếu vẫn vi phạm sau khi đã chỉnh sửa,
+        giảng viên phụ trách học phần lập biên bản, thông báo chuyển cho đơn vị quản lý để xử lý tùy mức độ vi phạm.
+        Quy định này không cho phép hệ thống kết luận về bài cụ thể của em.
+      partial: |
+        Chào em, theo quy định, việc đánh giá vi phạm sử dụng AI do giảng viên phụ trách thực hiện. Khi bị phát hiện vi phạm
+        lần đầu, người học phải chỉnh sửa và nộp lại bài theo yêu cầu của giảng viên.
+      offtopic: |
+        Chào em, AI được chia thành AI hỗ trợ (như Grammarly, Google Translate) và AI tạo sinh (như ChatGPT, Gemini).
+        Em nên tìm hiểu kỹ các công cụ trước khi sử dụng.
+  - id: SAT-Q3
+    cites: [D2.signs.a, D2.signs.exclusions, D2.sim.notsole]
+    email: |
+      Cho em hỏi tỷ lệ tương đồng từ bao nhiêu phần trăm thì được xem là có dấu hiệu đạo văn,
+      và phần danh mục tài liệu tham khảo có bị tính vào tỷ lệ đó không ạ?
+    answers:
+      full: |
+        Chào em, theo quy định, có tỷ lệ tương đồng từ 20% trở lên là một dấu hiệu định lượng; khi tính không tính phần
+        trích dẫn, danh mục tài liệu tham khảo và một số phần theo quy định. Lưu ý tỷ lệ tương đồng không phải căn cứ duy nhất
+        để kết luận đạo văn; việc đánh giá do giảng viên hoặc người có thẩm quyền thực hiện.
+      partial: |
+        Chào em, theo quy định, có tỷ lệ tương đồng từ 20% trở lên là một dấu hiệu định lượng. Lưu ý tỷ lệ tương đồng
+        không phải căn cứ duy nhất để kết luận đạo văn.
+      offtopic: |
+        Chào em, đạo văn là hành vi sử dụng ý tưởng, dữ liệu, ngôn từ của người khác mà không ghi nguồn phù hợp.
+        Em nên trích dẫn đầy đủ khi viết bài.

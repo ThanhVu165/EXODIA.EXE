@@ -125,3 +125,18 @@ Chạy ba nút Verify lần lượt, không đồng thời với xử lý email 
 Bốn ca hold-out C04/C08/C11/C13 do người dùng tự giữ và tự nhập qua ô "Xử lý email" trên Live URL. Agent không nhận, tìm, đoán hoặc tái tạo nội dung các ca này. Chưa có kết quả do người giữ bộ ca xác nhận thì ghi NOT RUN/CHƯA XÁC MINH.
 
 Không biến test FixedAgent, kiểm tra schema hoặc kết quả local thành bằng chứng phân loại LIVE. Phân biệt PASS/FAIL từng ca, kiểm tra duyệt tay và ngoại lệ đã được người dùng chấp thuận. S6 từng FAIL theo ngưỡng 1.000 ms trên Railway; waived (nếu chủ sản phẩm chấp thuận) không phải PASS.
+
+
+## Challenge bổ sung — Agent 2 (mức hài lòng dự đoán)
+
+Biến môi trường thêm: `EVAL_DAILY_CAP` (mặc định 100 lượt chấm/ngày, đếm trong Postgres; vượt trần ⇒ `EVALUATION_FAILED`),
+`REVIEW_THRESHOLD` (mặc định 70 — ngưỡng **đề xuất**, chưa hiệu chỉnh). Agent 2 dùng cùng `OPENAI_MODEL`.
+
+```bash
+curl "https://<app>/api/reports/daily?day=2026-10-17"          # báo cáo một ngày (giờ VN)
+curl -X POST "https://<app>/api/evaluations/backfill"          # chấm bù phản hồi AUTO chưa có đánh giá
+curl -X POST "https://<app>/api/evaluations/backfill?retry_failed=true"   # chấm lại các lượt lỗi
+# SAT-01..03 (Agent 2 thật trên câu trả lời viết sẵn, nhãn thứ tự do đội đặt; ~9 lời gọi mỗi lượt):
+python scripts/run_sat_pairs.py --runs 3 --out sat_pairs_result.json
+```
+Schema mới (`satisfaction_evaluations`) tự áp khi app khởi động (CREATE IF NOT EXISTS).

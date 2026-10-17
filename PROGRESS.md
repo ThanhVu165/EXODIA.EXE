@@ -385,3 +385,44 @@ Nguồn: `docs/validation/phase3-cdd97cf-20261017/dev_run.log` (người dùng c
 2. C09: yêu cầu xin ngoại lệ bị xếp lý do chính "thiếu dữ kiện" thay vì "vượt thẩm quyền" (vẫn chuyển cho nhân viên). Sửa bằng chỉ dẫn đã làm hỏng C07; chưa tìm được cách định nghĩa tách được hai ca mà không điều chỉnh theo bộ dev.
 3. Không có kết quả hold-out; mọi số đo là trên 11 ca dev đã dùng để phát triển.
 4. S6 (event loop khi gọi AI) chưa đạt ngưỡng và chưa đo lại; quét secret trong image Docker chưa chạy; giao diện nhân viên không có đăng nhập.
+
+
+---
+
+# Challenge bổ sung — Agent 2 chấm mức hài lòng DỰ ĐOÁN (2026-10-17)
+
+**Phân loại:** yêu cầu bổ sung do người dùng đặt (không có trong Brief Đề A). Phạm vi tối thiểu đã chốt với người dùng.
+
+**Đã làm (commit `db8d7e3`, `81eb991`, commit này):**
+- Bảng `satisfaction_evaluations`: UNIQUE theo bản outbox (mỗi phản hồi chấm đúng một lần), trạng thái
+  `RUNNING/COMPLETED/EVALUATION_FAILED/INSUFFICIENT_CONTEXT`, ràng buộc DB "có điểm ⇔ COMPLETED", model, phiên bản rubric
+  (`sat-rubric-v1-<hash prompt>`), token, cột rà soát của DSA.
+- Agent 2 (`evaluator.py`): prompt riêng, không tool, max_turns=1, tracing tắt, ba khối dữ liệu trong dấu phân cách
+  (email, phản hồi đã gửi, căn cứ do code trích). Không có quyền nào ngoài trả điểm + giải thích.
+- `satisfaction.py`: chạy nền (FastAPI BackgroundTasks) sau khi phản hồi AUTO ghi outbox; chấm bù cho phản hồi chưa có
+  đánh giá / kẹt quá 10 phút; chỉ chấm lại lượt lỗi khi yêu cầu rõ (`retry_failed`); `EVAL_DAILY_CAP` trong Postgres;
+  audit `SATISFACTION_EVALUATED` / `SATISFACTION_EVAL_*` / `SATISFACTION_REVIEWED`.
+- Báo cáo ngày (giờ VN) tính trực tiếp từ DB: đã gửi, đã chấm, lỗi, thiếu dữ liệu, chưa chấm, điểm trung bình (chỉ
+  trên COMPLETED), phân bố 4 khoảng, danh sách dưới ngưỡng, số phản hồi đã được nhân viên đính chính, số rà soát.
+- Tab giao diện "Đánh giá phản hồi (dự đoán)" với nhãn "không phải khảo sát sinh viên".
+
+**Bằng chứng (VM agent, Postgres 16 cục bộ):** `python -m pytest -q tests tests_extra` → **77 passed** (chạy 2 lần liên
+tiếp ổn định), gồm SAT-05 (ca chuyển tiếp và phản hồi do nhân viên viết không bị chấm), SAT-06 (lỗi Agent 2 ⇒
+`EVALUATION_FAILED`, score NULL; không tự chấm lại nếu không yêu cầu), hết ngân sách, `INSUFFICIENT_CONTEXT`, chấm đúng
+một lần, rà soát bắt buộc nhận xét, phép tính báo cáo. Các test dùng `FixedEvaluator` CHỈ TRONG TEST.
+Tự xem giao diện bằng Chromium headless trong môi trường agent với Agent 1/Agent 2 cố định chỉ-để-xem (không trong repo,
+không phải kết quả): luồng chấm nền qua HTTP, chấm bù, rà soát "Không đồng ý", không lỗi console.
+
+**Phát hiện khi viết test:** bộ đếm ngân sách theo ngày trong DB test tích lũy qua nhiều lần chạy làm test sau bị
+`BUDGET_EXCEEDED`; sửa ở helper test (đặt trần rất cao trừ test ngân sách), không đổi logic sản phẩm.
+
+**Chưa kiểm chứng / người dùng cần chạy:**
+1. Deploy; kiểm `/api/health/ready`=200 (schema mới tự áp).
+2. `python scripts/run_sat_pairs.py --runs 3 --out ...` (SAT-01..03, ~27 lời gọi Agent 2). Nhãn thứ tự trong
+   `tests_extra/sat_pairs.yaml` do agent soạn — **người dùng cần duyệt nhãn** trước khi dùng kết quả làm bằng chứng.
+3. Gửi vài email AUTO trên Live, mở tab đánh giá, xem điểm và thử Đồng ý/Không đồng ý.
+SAT-04 (phản hồi yêu cầu bổ sung thông tin) **không áp dụng**: phản hồi AUTO hiện không có dạng này.
+
+**Giới hạn (cho Slide 5):** điểm là dự đoán của LLM, chưa hiệu chỉnh với nhãn của người ngoài đội; cùng model vừa trả lời
+vừa chấm ⇒ lỗi có thể tương quan; ngưỡng 70 chưa hiệu chỉnh; không có lịch tự chạy cuối ngày (báo cáo tính khi mở;
+tác vụ nền mất khi restart sẽ được chấm bù bằng nút); tác vụ nền chạy cùng tiến trình Uvicorn (S6 chưa đạt).
