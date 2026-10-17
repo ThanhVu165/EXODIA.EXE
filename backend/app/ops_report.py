@@ -39,7 +39,7 @@ def _route(c: dict, status: str | None) -> str:
         return "Hệ thống (đang xử lý)"
     if c.get("paused_at_ref"):
         return "Nhân viên DSA (ca nhận khi hệ thống tạm dừng)"
-    label = pkg.get("suggested_route_label") if (c.get("decided_at_ref") or c.get("source") == "DEMO_SEED") else None
+    label = pkg.get("suggested_route_label") if c.get("decided_at_ref") else None
     return f"Nhân viên DSA → gợi ý chuyển: {label}" if label else "Nhân viên DSA"
 
 

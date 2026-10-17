@@ -74,8 +74,22 @@ async def main() -> int:
                     """INSERT INTO audit_log (case_id, actor, action, input_ref, reason, status_after, idempotency_key,
                                               policy_version, details, at)
                        VALUES (%s,'system','DEMO_SEED_CREATED',%s,%s,%s,%s,%s,%s,%s)""",
-                    (cid, f"case:{cid}", "Dữ liệu demo giả lập để minh họa báo cáo vận hành", status, key,
+                    (cid, f"case:{cid}", "Dữ liệu demo giả lập để minh họa báo cáo vận hành", "RECEIVED", key,
                      policy.version, json.dumps({"demo_seed": True, "batch": a.batch}), at))
+                # dòng audit chuyển trạng thái giống service thật, để báo cáo dựng lại được trạng thái tại từng thời điểm
+                mid = at + timedelta(minutes=1)
+                if err:
+                    trans = ("TECHNICAL_ERROR", "ERROR", f"{err}: dữ liệu demo giả lập")
+                elif "PAUSED" in flags:
+                    trans = ("QUEUED_WHILE_PAUSED", "PENDING_HUMAN", "Công tắc tạm dừng đang bật (demo giả lập)")
+                else:
+                    trans = ("DECIDED_ESCALATE", "PENDING_HUMAN", "Chuyển nhân viên DSA (demo giả lập)")
+                await conn.execute(
+                    """INSERT INTO audit_log (case_id, actor, action, input_ref, reason, status_before, status_after,
+                                              idempotency_key, policy_version, details, at)
+                       VALUES (%s,'system',%s,%s,%s,'PROCESSING',%s,%s,%s,%s,%s)""",
+                    (cid, trans[0], f"case:{cid}", trans[2], trans[1], key, policy.version,
+                     json.dumps({"demo_seed": True}), mid))
                 if replied:
                     rat = at + timedelta(days=age - 1)
                     await conn.execute(

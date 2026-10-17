@@ -489,3 +489,8 @@ AI tóm tắt có thể diễn đạt sai — chỉ được kiểm mã ca và c
 - **Giới hạn còn lại:** độ chính xác lịch sử phụ thuộc audit đầy đủ (ca tạo trước khi có audit `status_after` sẽ "Không xác
   định"). Kiểm tra con số của AI tóm tắt chỉ bảo đảm số có xuất hiện trong đầu vào, **không** bảo đảm số được gắn đúng chỉ
   tiêu ⇒ AI tóm tắt giữ là tùy chọn, bảng số liệu là nguồn chính.
+- **Đi kèm:** `scripts/seed_ops_demo.py` nay ghi dòng audit chuyển trạng thái giống service (`TECHNICAL_ERROR`,
+  `QUEUED_WHILE_PAUSED`, `DECIDED_ESCALATE`) để ca demo cũng dựng lại được trạng thái; bỏ ngoại lệ riêng cho `DEMO_SEED`
+  trong tuyến tiếp quản. Kiểm trên DB test: ca demo tạm dừng → quá hạn, bằng chứng `audit QUEUED_WHILE_PAUSED`; ca demo lỗi →
+  quá hạn, `error_code=LLM_TIMEOUT`; ca demo chờ nhân viên → trong hạn, "Chưa xác định"; ca demo đã trả lời → không còn mở.
+  Lô demo tạo bằng phiên bản script cũ (nếu có) sẽ thiếu các dòng này và hiện "Chưa xác định"/không có tuyến gợi ý.
