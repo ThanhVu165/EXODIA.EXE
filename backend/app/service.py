@@ -46,6 +46,7 @@ class Ctx:
     policy: Policy
     settings: Settings
     agent: AgentRunner | None
+    evaluator: object | None = None   # Agent 2 (evaluator.Evaluator); None => đánh giá ghi EVALUATION_FAILED
 
 
 def content_hash(sender: str | None, body: str) -> str:

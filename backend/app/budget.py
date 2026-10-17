@@ -8,6 +8,7 @@ import hashlib
 
 BUCKET_LLM_PUBLIC = "llm:public"
 BUCKET_LLM_VERIFY = "llm:verify"
+BUCKET_LLM_EVAL = "llm:eval"
 
 
 def ip_bucket(ip: str | None) -> str:

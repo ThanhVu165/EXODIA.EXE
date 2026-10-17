@@ -34,7 +34,10 @@ async def make_ctx(url, agent, **overrides):
     db = Database(url)
     await db.open()
     await db.ensure_schema()
-    settings = dataclasses.replace(load_settings(), **overrides)
+    # Bộ đếm ngày trong DB test tích lũy qua nhiều lần chạy: đặt trần rất cao trừ khi test tự đặt trần.
+    caps = {"llm_daily_cap": 10**6, "verify_daily_cap": 10**6, "eval_daily_cap": 10**6}
+    caps.update(overrides)
+    settings = dataclasses.replace(load_settings(), **caps)
     ctx = Ctx(db=db, policy=load_policy(), settings=settings, agent=agent)
     async with db.connection() as conn:
         await service.set_paused(ctx, False, "reset test", "pytest")

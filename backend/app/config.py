@@ -25,6 +25,8 @@ class Settings:
     verify_daily_cap: int       # hạn mức riêng cho Verify
     rate_per_ip_per_min: int    # giới hạn theo IP (IP có thể bị giả mạo -> chỉ là lớp phụ)
     lease_seconds: int          # thời hạn giữ ca ở PROCESSING trước khi cho phép tiếp quản
+    eval_daily_cap: int         # hạn mức riêng lượt gọi Agent 2 (chấm điểm hài lòng dự đoán)/ngày
+    review_threshold: int       # ngưỡng ĐỀ XUẤT để ưu tiên rà soát (chưa hiệu chỉnh)
     price_input_per_1m: float | None   # đơn giá USD/1M token (để ước tính chi phí; không đặt => không ước tính)
     price_output_per_1m: float | None
 
@@ -47,6 +49,8 @@ def load_settings() -> Settings:
         verify_daily_cap=int(os.environ.get("VERIFY_DAILY_CAP", "60")),
         rate_per_ip_per_min=int(os.environ.get("RATE_PER_IP_PER_MIN", "6")),
         lease_seconds=int(os.environ.get("LEASE_SECONDS", "180")),
+        eval_daily_cap=int(os.environ.get("EVAL_DAILY_CAP", "100")),
+        review_threshold=int(os.environ.get("REVIEW_THRESHOLD", "70")),
         price_input_per_1m=_float_or_none(os.environ.get("PRICE_INPUT_PER_1M")),
         price_output_per_1m=_float_or_none(os.environ.get("PRICE_OUTPUT_PER_1M")),
     )

@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Header, Request
+from datetime import date, datetime, timedelta, timezone
+
+from fastapi import APIRouter, BackgroundTasks, Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from . import budget, service, verify
+from . import budget, satisfaction, service, verify
 from .service import Ctx, ServiceError, to_json
 
 router = APIRouter(prefix="/api")
@@ -53,8 +55,14 @@ async def rate_limit(request: Request, ctx: Ctx, scope: str, per_min: int) -> No
         raise ServiceError(429, "RATE_LIMITED", f"Quá {per_min} yêu cầu/phút từ địa chỉ này; thử lại sau")
 
 
+def schedule_evaluation(bg: BackgroundTasks, ctx: Ctx, case: dict) -> None:
+    """Agent 2 chạy SAU khi phản hồi AUTO đã ghi outbox, ngoài thời gian chờ của request."""
+    if case.get("status") == "AUTO_REPLIED" and case.get("source") == "PUBLIC":
+        bg.add_task(satisfaction.evaluate_case_in_background, ctx, case["id"])
+
+
 @router.post("/emails")
-async def submit_email(payload: EmailIn, request: Request,
+async def submit_email(payload: EmailIn, request: Request, bg: BackgroundTasks,
                        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
     ctx = ctx_of(request)
     # Lời gọi nội bộ của bảng kiểm tra điều khiển Verify: dấu hiệu nằm trong ASGI scope do bộ bọc nội bộ đặt,
@@ -72,6 +80,7 @@ async def submit_email(payload: EmailIn, request: Request,
                                                         budget_bucket=budget.BUCKET_LLM_VERIFY)
     except ServiceError as e:
         return err(e)
+    schedule_evaluation(bg, ctx, case)
     return JSONResponse({"created": created, "case": case_view(case)}, status_code=201 if created else 200)
 
 
@@ -98,7 +107,7 @@ async def get_case(case_id: uuid.UUID, request: Request):
 
 
 @router.post("/cases/{case_id}/retry")
-async def retry_case(case_id: uuid.UUID, request: Request):
+async def retry_case(case_id: uuid.UUID, request: Request, bg: BackgroundTasks):
     """Thử lại ca ERROR bằng CÙNG khóa idempotency của lần gửi gốc."""
     ctx = ctx_of(request)
     try:
@@ -116,6 +125,7 @@ async def retry_case(case_id: uuid.UUID, request: Request):
                                               verify_run_id=case["verify_run_id"], budget_bucket=bucket)
     except ServiceError as e:
         return err(e)
+    schedule_evaluation(bg, ctx, case)
     return {"case": case_view(case)}
 
 
@@ -182,6 +192,7 @@ async def system(request: Request):
         row = await cur.fetchone()
         used_public = await budget.current(conn, budget.BUCKET_LLM_PUBLIC, "day")
         used_verify = await budget.current(conn, budget.BUCKET_LLM_VERIFY, "day")
+        used_eval = await budget.current(conn, budget.BUCKET_LLM_EVAL, "day")
     return to_json({
         "paused": bool(row and row["value"].get("on")),
         "paused_info": row,
@@ -189,7 +200,8 @@ async def system(request: Request):
         "model_configured": ctx.settings.openai_model,
         "llm_ready": ctx.agent is not None,
         "budget": {"public_used": used_public, "public_cap": ctx.settings.llm_daily_cap,
-                   "verify_used": used_verify, "verify_cap": ctx.settings.verify_daily_cap},
+                   "verify_used": used_verify, "verify_cap": ctx.settings.verify_daily_cap,
+                   "eval_used": used_eval, "eval_cap": ctx.settings.eval_daily_cap},
         "synthetic_demo": True,
     })
 
@@ -226,3 +238,50 @@ async def run_verify(kind: str, request: Request):
 @router.get("/verify-runs")
 async def verify_runs(request: Request, limit: int = 10):
     return {"runs": await verify.latest_runs(ctx_of(request), max(1, min(limit, 50)))}
+
+
+# ---------------------------------------------------------------------- Đánh giá mức hài lòng DỰ ĐOÁN (Agent 2)
+class ReviewIn(BaseModel):
+    verdict: str
+    comment: str | None = None
+    actor_name: str | None = Field(None, max_length=100)
+
+
+def _vn_today() -> date:
+    return (datetime.now(timezone.utc) + timedelta(hours=7)).date()
+
+
+@router.get("/reports/daily")
+async def report_daily(request: Request, day: date | None = None):
+    return await satisfaction.daily_report(ctx_of(request), day or _vn_today())
+
+
+@router.get("/evaluations/{eval_id}")
+async def get_evaluation(eval_id: uuid.UUID, request: Request):
+    ctx = ctx_of(request)
+    async with ctx.db.connection() as conn:
+        cur = await conn.execute("SELECT * FROM satisfaction_evaluations WHERE id=%s", (eval_id,))
+        row = await cur.fetchone()
+    if row is None:
+        return JSONResponse({"error": {"code": "NOT_FOUND", "message": "Không tìm thấy đánh giá"}}, status_code=404)
+    return {"evaluation": to_json(row)}
+
+
+@router.post("/evaluations/{eval_id}/review")
+async def review_evaluation(eval_id: uuid.UUID, payload: ReviewIn, request: Request):
+    try:
+        ev = await satisfaction.review(ctx_of(request), eval_id, payload.verdict, payload.comment, payload.actor_name)
+    except ServiceError as e:
+        return err(e)
+    return {"evaluation": to_json(ev)}
+
+
+@router.post("/evaluations/backfill")
+async def backfill_evaluations(request: Request, retry_failed: bool = False, limit: int = 10):
+    """Chấm bù phản hồi AUTO chưa có đánh giá (hoặc kẹt / lỗi nếu retry_failed). Tốn lượt Agent 2."""
+    ctx = ctx_of(request)
+    try:
+        await rate_limit(request, ctx, "evaluations", 2)
+    except ServiceError as e:
+        return err(e)
+    return await satisfaction.backfill(ctx, limit=limit, retry_failed=retry_failed)

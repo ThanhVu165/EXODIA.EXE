@@ -15,6 +15,7 @@ from psycopg_pool import PoolTimeout
 
 from . import api, smoke
 from .agent import OpenAIAgentRunner
+from .evaluator import OpenAIEvaluator
 from .policy import load_policy
 from .service import Ctx
 from .config import load_settings
@@ -32,10 +33,11 @@ async def lifespan(app: FastAPI):
     app.state.db = Database(settings.database_url)
     await app.state.db.open()
     policy = load_policy()
-    agent = None
+    agent = evaluator = None
     if settings.openai_model and os.environ.get("OPENAI_API_KEY"):
         agent = OpenAIAgentRunner(settings, policy)
-    app.state.ctx = Ctx(db=app.state.db, policy=policy, settings=settings, agent=agent)
+        evaluator = OpenAIEvaluator(settings)
+    app.state.ctx = Ctx(db=app.state.db, policy=policy, settings=settings, agent=agent, evaluator=evaluator)
     try:
         yield
     finally:

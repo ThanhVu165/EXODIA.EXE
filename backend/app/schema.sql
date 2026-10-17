@@ -97,3 +97,28 @@ CREATE TABLE IF NOT EXISTS verify_runs (
     usage        jsonb,
     error        text
 );
+
+-- Challenge bổ sung: Agent 2 chấm "mức hài lòng DỰ ĐOÁN" cho phản hồi tự động đã ghi outbox.
+-- Không phải khảo sát sinh viên. Điểm chỉ có khi status = COMPLETED; lỗi KHÔNG bao giờ thành 0 điểm.
+CREATE TABLE IF NOT EXISTS satisfaction_evaluations (
+    id               uuid PRIMARY KEY,
+    outbox_id        uuid NOT NULL UNIQUE REFERENCES outbox(id),   -- mỗi phản hồi đã gửi chấm đúng một lần
+    case_id          uuid NOT NULL REFERENCES cases(id),
+    status           text NOT NULL CHECK (status IN ('RUNNING','COMPLETED','EVALUATION_FAILED','INSUFFICIENT_CONTEXT')),
+    score            int CHECK (score BETWEEN 0 AND 100),
+    reason           text,
+    missing_points   text[] NOT NULL DEFAULT '{}',
+    error_code       text,
+    model_id         text,
+    rubric_version   text NOT NULL,
+    usage            jsonb,
+    attempts         int NOT NULL DEFAULT 1,
+    started_at       timestamptz NOT NULL DEFAULT now(),
+    evaluated_at     timestamptz,
+    review_verdict   text CHECK (review_verdict IN ('AGREE','DISAGREE')),
+    review_comment   text,
+    reviewer         text,
+    reviewed_at      timestamptz,
+    CHECK ((status = 'COMPLETED') = (score IS NOT NULL))
+);
+CREATE INDEX IF NOT EXISTS sat_eval_time_idx ON satisfaction_evaluations (evaluated_at DESC);
