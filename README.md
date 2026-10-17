@@ -2,6 +2,8 @@
 
 > **Bản demo/sandbox. Dữ liệu giả lập. Không phải hệ thống chính thức của UEH.** Không gửi email thật: "gửi phản hồi" = ghi vào bảng `outbox` và hiển thị trên giao diện.
 
+Live URL: https://exodiaexe-production.up.railway.app. Trạng thái và commit đã kiểm chứng được ghi trong `PROGRESS.md`; có URL hoạt động chưa đồng nghĩa tất cả ca nghiệp vụ đều đạt.
+
 Hệ thống hỗ trợ nhân viên Ban chăm sóc người học (DSA) trả lời email thắc mắc của sinh viên về đạo văn và sử dụng AI
 trong sản phẩm học thuật, dựa trên **nguyên văn** Quy định kèm QĐ 4002/QĐ-ĐHKT-NCPTGKTC của UEH (`policy/QD4002_UEH.md`).
 
@@ -29,3 +31,11 @@ bằng code** (`backend/app/gate.py`). Nhân viên DSA quyết định mọi ca 
 Một container Docker trên Railway: FastAPI (1 tiến trình Uvicorn) phục vụ API và frontend Next.js static export;
 Supabase PostgreSQL qua Session Pooler (5432, SSL). Xem `RUNBOOK.md` để chạy, `PROGRESS.md` cho trạng thái, bằng chứng và
 giới hạn, `docs/AI_USAGE.md` cho việc dùng công cụ AI khi phát triển.
+
+## Chạy thử và giới hạn bàn giao
+
+Xem `RUNBOOK.md` để nạp `.env.local`, chạy trên Windows/Linux, deploy, chạy 11 ca dev qua HTTP với OpenAI thật và ba nút Verify. Verify có hạn mức riêng; mọi email của bộ dev/Verify đều là dữ liệu giả lập.
+
+Các test dùng FixedAgent chỉ xác minh cơ chế trạng thái, DB và audit; kết quả phân loại cần được xác minh bằng model thật. Bảng kiểm tra điều khiển hiện kiểm tra tầng service và hook lỗi trong tiến trình, chưa phải kiểm thử đầy đủ qua HTTP. Bốn ca hold-out do người giữ bộ ca tự chạy, không cung cấp cho agent.
+
+Giao diện nhân viên hiện không có đăng nhập; người biết URL có thể thao tác Stop/Hủy/Override. Stop hủy ca đang xử lý dở và giữ hàng chờ nhân viên. Đây là giới hạn của demo, không phải mô hình phân quyền để triển khai nghiệp vụ thật.
