@@ -109,3 +109,26 @@ Môi trường agent không gọi được OpenAI và Supabase ⇒ mọi kiểm 
 - Ngân sách (Mục 6.6): email ≤ 4.000 ký tự; giới hạn theo IP/phút (lớp phụ, IP có thể giả mạo); trần toàn cục/ngày `LLM_DAILY_CAP` (mặc định 300) là hàng rào thật; Verify có hạn mức riêng `VERIFY_DAILY_CAP` (60); mọi bộ đếm trong Postgres; vượt trần → `ERROR BUDGET_EXCEEDED`; Verify ghi token và chi phí ước tính (chỉ khi đặt `PRICE_INPUT_PER_1M`/`PRICE_OUTPUT_PER_1M`, agent không tự bịa đơn giá).
 - Giao diện một trang (tab theo hash): Xử lý email · Hàng chờ nhân viên DSA · Outbox · Verify · Nhật ký kiểm toán; công tắc Stop toàn cục ở đầu trang; biểu ngữ synthetic; tách "Sinh viên nói (chưa xác minh)" và "Căn cứ quy chế".
 - Bằng chứng: `npm run build` OK; tự xem giao diện bằng Chromium headless trong môi trường agent với một agent cố định CHỈ ĐỂ XEM GIAO DIỆN (không nằm trong repo, không phải kết quả nghiệp vụ): luồng ESCALATE, AUTO, bảng kiểm tra điều khiển 8/8, chi tiết ca + audit, màn hình 390px; không có lỗi console. `smoke_local.py` vẫn PASS với khung mới; `pytest` 68 passed.
+
+---
+
+# GIAI ĐOẠN 3 — Bàn giao (phần agent làm được)
+- `RUNBOOK.md` (clone → chạy, biến môi trường, test, chạy ca dev, Verify, Railway), `README.md` (biểu ngữ, thật/giả lập), `docs/AI_USAGE.md`, `.env.example` cập nhật.
+
+## Giới hạn và rủi ro đã biết (dữ kiện thô cho Slide 5)
+1. **Chưa có kết quả chạy thật với OpenAI** cho 11 ca dev và Verify (môi trường agent bị chặn). Chất lượng phân loại (đặc biệt ranh giới "câu hỏi thông tin" ↔ "xin kết luận", và khi nào đặt `policy_gap`) chưa được đo.
+2. S6 (event loop khi gọi LLM) do người dùng cho qua, chưa chứng minh trên Railway.
+3. Giao diện nhân viên không có đăng nhập: bất kỳ ai có URL đều có thể Dừng/Hủy/Override (chấp nhận cho demo; mọi thao tác đều ghi audit).
+4. Kiểm tra điều khiển số 5 bật Stop thật: nếu đúng lúc đó có người khác đang xử lý email, ca của họ bị hủy (Stop hủy ca đang chạy dở).
+5. Cụm cấm trong phản hồi tự động so khớp chuỗi con: "được miễn" cũng bắt cả "không được miễn" → có thể chuyển tiếp thừa (an toàn nhưng tốn nhân lực).
+6. Tiền lọc injection dựa trên mẫu: có thể bỏ sót biến thể diễn đạt mới; lớp thứ hai là tín hiệu `suspect_input` của AI.
+7. Ca kẹt ở PROCESSING (ví dụ redeploy giữa chừng) chỉ được tiếp quản khi có retry cùng khóa sau khi hết lease, hoặc nhân viên hủy; không có tiến trình nền tự quét.
+8. Bảng kiểm tra điều khiển gọi tầng service trực tiếp thay vì HTTP (đã ghi ở 2e).
+9. Phát hiện trùng nội dung (`NGHI_TRUNG`) chỉ trong 24 giờ và cùng nguồn.
+
+## Việc người dùng cần làm tiếp
+1. Đặt biến môi trường mới trên Railway (xem `.env.example`), deploy commit mới nhất.
+2. `python scripts/run_dev_cases.py <URL> --out dev_run.json` → dán bảng kết quả (bắt buộc theo Mục 8; agent không tự chạy được).
+3. Bấm 3 nút Verify trên Live URL; dán kết quả (hoặc `GET /api/verify-runs`).
+4. Chạy 4 ca hold-out (agent không có) qua ô "Xử lý email".
+5. Push lên GitHub (agent chưa push; không squash/force-push).
