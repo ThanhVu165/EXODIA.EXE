@@ -18,7 +18,7 @@ def vn(d, hh, mm=0):
 
 
 async def add_case(conn, *, created, status, source="PUBLIC", reply_at=None, cancel_at=None, flags=(), error=None,
-                   staff_at=None):
+                   staff_at=None, initial=None):
     cid = uuid.uuid4()
     await conn.execute(
         """INSERT INTO cases (id, submission_key, content_hash, email_body, source, status, flags, error_code,
@@ -26,15 +26,26 @@ async def add_case(conn, *, created, status, source="PUBLIC", reply_at=None, can
            VALUES (%s,%s,'h','Email giả lập (test báo cáo vận hành)',%s,%s,%s,%s,%s,
                    '{"suggested_route_label": "giảng viên phụ trách/người hướng dẫn"}'::jsonb)""",
         (cid, f"ops-{cid}", source, status, list(flags), error, created))
-    await conn.execute("INSERT INTO audit_log (case_id, actor, action, at) VALUES (%s,'system','RECEIVED',%s)",
-                       (cid, created))
+    async def aud(actor, action, after, at, reason=None):
+        await conn.execute("INSERT INTO audit_log (case_id, actor, action, status_after, reason, at) "
+                           "VALUES (%s,%s,%s,%s,%s,%s)", (cid, actor, action, after, reason, at))
+    await aud("system", "RECEIVED", "RECEIVED", created)
+    # trạng thái sau xử lý tự động (trước phản hồi / hủy) — dựng giống các dòng audit thật của service
+    mid = created + timedelta(minutes=1)
+    first = initial or status
+    if first == "ERROR":
+        await aud("system", "TECHNICAL_ERROR", "ERROR", mid, f"{error}: chi tiết giả lập")
+    elif "PAUSED" in flags:
+        await aud("system", "QUEUED_WHILE_PAUSED", "PENDING_HUMAN", mid)
+    elif first in ("PENDING_HUMAN", "HUMAN_REPLIED", "CANCELLED"):
+        await aud("system", "DECIDED_ESCALATE", "PENDING_HUMAN", mid)
     if reply_at:
         await conn.execute(
             "INSERT INTO outbox (id, case_id, kind, version, body, status, idempotency_key, created_at) "
             "VALUES (%s,%s,'HUMAN_REPLY',1,'trả lời giả lập','SENT',%s,%s)", (uuid.uuid4(), cid, f"h-{cid}", reply_at))
+        await aud("staff", "STAFF_REPLIED", "HUMAN_REPLIED", reply_at)
     if cancel_at:
-        await conn.execute("INSERT INTO audit_log (case_id, actor, action, at) VALUES (%s,'staff','CANCELLED',%s)",
-                           (cid, cancel_at))
+        await aud("staff", "CANCELLED", "CANCELLED", cancel_at)
     if staff_at:
         await conn.execute("INSERT INTO audit_log (case_id, actor, actor_name, action, at) "
                            "VALUES (%s,'staff','NV test','STAFF_NOTE_TEST',%s)", (cid, staff_at))
@@ -103,5 +114,28 @@ def test_future_day_rejected(test_db_url):
             raise AssertionError("phải lỗi")
         except ValueError:
             pass
+        await ctx.db.close()
+    asyncio.run(t())
+
+
+def test_historical_state_rebuilt_from_audit(test_db_url):
+    """Tái hiện lỗi người dùng báo: ca ERROR ngày 14, nhân viên trả lời ngày 16.
+    Xem lại ngày 14 phải thấy ca còn mở VÀ đang lỗi kỹ thuật (không lấy trạng thái hiện tại HUMAN_REPLIED)."""
+    async def t():
+        ctx = await make_ctx(test_db_url, FixedAgent())
+        d14 = date(2026, 4, 14)   # thứ Ba
+        d16 = date(2026, 4, 16)
+        async with ctx.db.connection() as conn:
+            cid = await add_case(conn, created=vn(d14, 9), status="HUMAN_REPLIED", initial="ERROR",
+                                 error="LLM_TIMEOUT", reply_at=vn(d16, 10))
+        now = vn(d16 + timedelta(days=10), 12)
+        r14 = await ops_report.operations_report(ctx, d14, now=now, cfg=CFG)
+        item = {i["case_id"]: i for i in r14["open_cases"]}[cid]
+        assert item["status_at_reference"] == "ERROR" and item["current_status"] == "HUMAN_REPLIED"
+        assert item["delay"] == {"cause": "Lỗi kỹ thuật khi xử lý tự động", "evidence": "error_code=LLM_TIMEOUT"}
+        assert item["handling_route"].startswith("Nhân viên DSA (lỗi kỹ thuật")
+        assert r14["counts"]["open_error"] >= 1
+        r16 = await ops_report.operations_report(ctx, d16, now=now, cfg=CFG)
+        assert cid not in {i["case_id"] for i in r16["open_cases"]}
         await ctx.db.close()
     asyncio.run(t())

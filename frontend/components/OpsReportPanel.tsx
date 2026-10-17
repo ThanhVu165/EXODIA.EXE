@@ -25,7 +25,7 @@ function CaseTable({ rows, onOpen }: { rows: Json[]; onOpen?: (id: string) => vo
     <div className="tablewrap">
       <table>
         <thead>
-          <tr><th>Mã ca</th><th>SLA</th><th>Nhận / Hạn</th><th>Trạng thái hiện tại</th><th>Hoạt động gần nhất</th><th>Tuyến tiếp quản</th><th>Nguyên nhân chậm (bằng chứng)</th></tr>
+          <tr><th>Mã ca</th><th>SLA</th><th>Nhận / Hạn</th><th>Trạng thái tại thời điểm tham chiếu (hiện tại)</th><th>Hoạt động gần nhất</th><th>Tuyến tiếp quản</th><th>Nguyên nhân chậm (bằng chứng)</th></tr>
         </thead>
         <tbody>
           {rows.map((r) => (
@@ -39,7 +39,7 @@ function CaseTable({ rows, onOpen }: { rows: Json[]; onOpen?: (id: string) => vo
                 {SLA_VI[r.sla_state]}<br /><span className="muted">{r.hours_remaining >= 0 ? `còn ${r.hours_remaining} giờ` : `quá ${-r.hours_remaining} giờ`}</span>
               </td>
               <td>{fmtTime(r.received_at)}<br /><b>{fmtTime(r.due_at)}</b></td>
-              <td>{STATUS_VI[r.current_status] || r.current_status}{r.reason_primary ? <><br /><span className="muted">{REASON_VI[r.reason_primary]}</span></> : null}{r.flags?.length ? <><br /><span className="muted">{r.flags.join(", ")}</span></> : null}</td>
+              <td>{r.status_at_reference ? (STATUS_VI[r.status_at_reference] || r.status_at_reference) : "Không xác định từ audit"}{r.status_at_reference !== r.current_status ? <><br /><span className="muted">hiện tại: {STATUS_VI[r.current_status] || r.current_status}</span></> : null}{r.reason_primary ? <><br /><span className="muted">{REASON_VI[r.reason_primary]}</span></> : null}{r.flags?.length ? <><br /><span className="muted">{r.flags.join(", ")}</span></> : null}</td>
               <td>{r.last_activity?.action || "—"}<br /><span className="muted">{fmtTime(r.last_activity?.at)} · {r.last_activity?.actor}{r.last_activity?.actor_name ? ` (${r.last_activity.actor_name})` : ""}</span></td>
               <td>{r.handling_route}</td>
               <td>{r.delay.cause}{r.delay.evidence ? <><br /><span className="muted">{r.delay.evidence}</span></> : null}</td>

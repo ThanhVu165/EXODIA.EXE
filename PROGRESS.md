@@ -470,3 +470,22 @@ email, gate, policy, ground truth, chỉ dẫn phân loại, Verify hay module �
 "hoàn tất" chỉ phản ánh có phản hồi trong Outbox, không phản ánh sinh viên đã được giải quyết; trạng thái hiện tại của
 ca trong danh sách là trạng thái lúc tạo báo cáo, không phải lúc tham chiếu; ngày nghỉ phải cấu hình tay;
 AI tóm tắt có thể diễn đạt sai — chỉ được kiểm mã ca và con số, không kiểm ý nghĩa câu chữ.
+
+
+## Sửa lỗi báo cáo ngày cũ (người dùng phát hiện khi review)
+- **Lỗi:** `open_error`, tuyến tiếp quản và nguyên nhân chậm dùng TRẠNG THÁI HIỆN TẠI của ca. Người dùng tái hiện: ca ERROR
+  ngày 14, nhân viên trả lời ngày 16 ⇒ xem lại ngày 14, ca vẫn được tính "còn mở" nhưng số ca lỗi đổi 1 → 0. Mô tả ở mục
+  trên ("trạng thái dựng lại tại thời điểm tham chiếu") vì thế chưa đúng cho các trường này.
+- **Chọn cách sửa:** dựng lại từ `audit_log` (thay vì giới hạn báo cáo chỉ hôm nay), vì mọi chuyển trạng thái của service đều
+  ghi `status_after` nên không cần thêm bảng/cột. Trạng thái tại tham chiếu = dòng audit cuối có `status_after`, `at <=`
+  tham chiếu; mã lỗi lấy từ dòng `TECHNICAL_ERROR` trước tham chiếu; cờ tạm dừng từ `QUEUED_WHILE_PAUSED`; tuyến gợi ý chỉ
+  dùng khi đã có dòng `DECIDED_*` trước tham chiếu; "kẹt quá lease" chỉ dùng khi báo cáo là thời điểm hiện tại. Ca không dựng
+  được trạng thái hiển thị "Không xác định từ audit" và có đếm `open_status_unknown`. Giao diện hiện cả trạng thái tại tham
+  chiếu và trạng thái hiện tại.
+- **Bằng chứng:** test hồi quy `test_historical_state_rebuilt_from_audit` đúng kịch bản trên (ngày 14: ERROR, nguyên nhân
+  `error_code=LLM_TIMEOUT`, tuyến lỗi kỹ thuật; ngày 16: không còn mở); với `ops_report.py` của commit trước test FAIL.
+  `python -m pytest -q tests tests_extra` → 92 passed (VM agent, Postgres cục bộ). Trên Windows không có DB test, các test
+  DB bị skip (người dùng báo 70 pass, 21 skip trước bản sửa).
+- **Giới hạn còn lại:** độ chính xác lịch sử phụ thuộc audit đầy đủ (ca tạo trước khi có audit `status_after` sẽ "Không xác
+  định"). Kiểm tra con số của AI tóm tắt chỉ bảo đảm số có xuất hiện trong đầu vào, **không** bảo đảm số được gắn đúng chỉ
+  tiêu ⇒ AI tóm tắt giữ là tùy chọn, bảng số liệu là nguồn chính.
