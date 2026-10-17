@@ -1,0 +1,88 @@
+{
+  "runs": [
+    {
+      "id": "643cdc26-1a58-46ce-8dbd-5930b7258094",
+      "kind": "CONTROLS",
+      "started_at": "2026-10-17 06:44:05.050506+00:00",
+      "finished_at": "2026-10-17 06:44:56.592041+00:00",
+      "duration_ms": 51541,
+      "status": "DONE",
+      "passed": 8,
+      "total": 8,
+      "results": [
+        {
+          "at": "2026-10-17T13:44:17.877728+07:00",
+          "no": 1,
+          "mode": "http",
+          "check": "Cùng khóa + cùng nội dung → 1 ca, 1 outbox",
+          "passed": true,
+          "evidence": "HTTP 201 rồi 200; ca=1, outbox=1, quyết định=AUTO, trạng thái=AUTO_REPLIED"
+        },
+        {
+          "at": "2026-10-17T13:44:18.878992+07:00",
+          "no": 2,
+          "mode": "http",
+          "check": "Cùng khóa + nội dung khác → 409",
+          "passed": true,
+          "evidence": "HTTP 409 IDEMPOTENCY_KEY_REUSED"
+        },
+        {
+          "at": "2026-10-17T13:44:29.173079+07:00",
+          "no": 3,
+          "mode": "http",
+          "check": "Cùng nội dung + khóa mới → 2 ca, cờ NGHI_TRUNG",
+          "passed": true,
+          "evidence": "HTTP 201; số ca cùng nội dung=2, cờ ca mới=['NGHI_TRUNG']"
+        },
+        {
+          "at": "2026-10-17T13:44:44.770008+07:00",
+          "no": 4,
+          "mode": "in-process (lỗi) + http (retry)",
+          "check": "Retry sau lỗi chèn giữa chừng → đúng 1 outbox",
+          "passed": true,
+          "evidence": "sau lỗi: ERROR/FINALIZE_FAILED, outbox=0; retry qua HTTP 200: AUTO_REPLIED, outbox=1"
+        },
+        {
+          "at": "2026-10-17T13:44:50.65787+07:00",
+          "no": 5,
+          "mode": "http",
+          "check": "Bật tạm dừng → không AUTO, vào hàng chờ với PAUSED; sau đó tắt",
+          "passed": true,
+          "evidence": "bật HTTP 200; ca: PENDING_HUMAN, cờ=['PAUSED']; tắt HTTP 200"
+        },
+        {
+          "at": "2026-10-17T13:44:52.179241+07:00",
+          "no": 6,
+          "mode": "http",
+          "check": "Hủy ca chưa kết thúc → CANCELLED, có audit",
+          "passed": true,
+          "evidence": "HTTP 200; trạng thái=CANCELLED, dòng audit CANCELLED=1"
+        },
+        {
+          "at": "2026-10-17T13:44:55.578179+07:00",
+          "no": 7,
+          "mode": "http",
+          "check": "Override ca AUTO → đính chính, bản cũ SUPERSEDED, có lý do",
+          "passed": true,
+          "evidence": "HTTP 200; outbox=[('AUTO_REPLY', 'SUPERSEDED'), ('CORRECTION', 'SENT')], lý do='Verify: kiểm tra override (số 7)'"
+        },
+        {
+          "at": "2026-10-17T13:44:56.339877+07:00",
+          "no": 8,
+          "mode": "http",
+          "check": "Audit đầy đủ cho một ca (đủ trường Mục 6.3)",
+          "passed": true,
+          "evidence": "HTTP 200; 6 dòng: ['RECEIVED', 'CLAIMED', 'AGENT_CALLED', 'DECIDED_AUTO', 'OUTBOX_WRITTEN', 'OVERRIDE_CORRECTION']; trường thiếu ở dòng quyết định: không; ở các dòng: không"
+        }
+      ],
+      "usage": {
+        "cost_note": "Chưa cấu hình PRICE_INPUT_PER_1M/PRICE_OUTPUT_PER_1M",
+        "input_tokens": 26865,
+        "total_tokens": 28214,
+        "output_tokens": 1349,
+        "estimated_cost_usd": null
+      },
+      "error": null
+    }
+  ]
+}

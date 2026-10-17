@@ -1,0 +1,39 @@
+{
+  "tested_commit": "0d027bb52b087a06bc498f6c83817581f623ad1f",
+  "deployment_id": "8d92bd32-f1d5-46a2-a196-cbae254bddba",
+  "deployment_status": "SUCCESS",
+  "url": "https://exodiaexe-production.up.railway.app",
+  "configured_llm_max_output_tokens": 6000,
+  "configuration_evidence": "Railway set_variables acknowledged before deploying 0d027bb",
+  "baseline_holdout": "NOT RUN by explicit user choice",
+  "postfix_holdout": "NOT RUN; user explicitly reported not run; manual instructions provided without seeing or reconstructing cases",
+  "mode": "LIVE OpenAI and Supabase; synthetic email data",
+  "old_evidence": "docs/validation/phase3-20261017; unchanged",
+  "dev_passed": 9,
+  "dev_total": 11,
+  "dev_recorded_tokens": 107970,
+  "dev_cases_with_usage": 11,
+  "dev_started_at": "2026-10-17T06:37:58.699334+00:00",
+  "dev_finished_at": "2026-10-17T06:41:02.103401+00:00",
+  "local_pytest": "56 passed, 13 skipped in 1.92s; TEST_DATABASE_URL unset",
+  "ui_note": "General button dispatch failed; no new UI-triggered run in persisted history; endpoint fallback used.",
+  "verify_runs": {
+    "CONTROLS": {
+      "id": "c303da28-c614-45a2-a03f-7c1e3c7f7431",
+      "passed": 8,
+      "total": 8
+    },
+    "ESCALATION": {
+      "id": "0452a109-9168-4c9f-8017-499fd20dffcf",
+      "passed": 5,
+      "total": 5
+    },
+    "GENERAL": {
+      "id": "4e2545c2-76b5-47a0-b457-6f94880e1cb3",
+      "passed": 2,
+      "total": 4
+    }
+  },
+  "additional_observed_control_run": "643cdc26-1a58-46ce-8dbd-5930b7258094; 8/8; trigger not attributed; saved separately",
+  "verify_ui": "Browser click dispatch failed; checked persisted history and invoked three Verify endpoints via HTTP. Three UI buttons not verified."
+}

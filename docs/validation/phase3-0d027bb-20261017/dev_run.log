@@ -1,0 +1,14 @@
+C01: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 14962ms
+C02: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 12998ms
+C03: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 15147ms
+C05: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 14645ms
+C06: FAIL | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: ['4. must_cite'] | 18758ms
+C07: FAIL | thực=ESCALATE/REQUIRES_HUMAN_AUTHORITY flags=['NGHI_TRUNG'] | kỳ vọng=ESCALATE/UNKNOWN_FACT | lỗi: ['2. reason_primary'] | 17299ms
+C09: PASS | thực=ESCALATE/REQUIRES_HUMAN_AUTHORITY flags=['NGHI_TRUNG'] | kỳ vọng=ESCALATE/REQUIRES_HUMAN_AUTHORITY | lỗi: - | 15355ms
+C10: PASS | thực=ESCALATE/OUT_OF_POLICY flags=['NGHI_TRUNG'] | kỳ vọng=ESCALATE/OUT_OF_POLICY | lỗi: - | 22134ms
+C12: PASS | thực=ESCALATE/REQUIRES_HUMAN_AUTHORITY flags=['NGHI_TRUNG', 'SUSPECT_INPUT'] | kỳ vọng=ESCALATE/REQUIRES_HUMAN_AUTHORITY | lỗi: - | 24365ms
+C14: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 12591ms
+C15: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 15151ms
+
+Bắt đầu 2026-10-17T06:37:58.699334+00:00; xong 2026-10-17T06:41:02.103401+00:00
+Đạt 9/11; tổng token 107970

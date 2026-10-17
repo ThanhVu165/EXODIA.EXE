@@ -1,6 +1,6 @@
 # PROGRESS
 
-Cập nhật: 2026-10-17 — **Giai đoạn 2–3 đã deploy; kiểm thử LIVE phát hiện lỗi, chưa nghiệm thu.** Kết quả hiện tại ở mục cuối "Kiểm chứng mới trên Windows và Railway". Các mục trước đó là lịch sử theo môi trường/phiên chạy, không phải trạng thái hiện tại.
+Cập nhật: 2026-10-17 — **Giai đoạn 2–3 đã deploy; kiểm thử LIVE phát hiện lỗi, chưa nghiệm thu.** Kết quả hiện tại ở mục cuối "Kiểm chứng lại bản sửa 0d027bb" (dev 9/11, General 2/4, Escalation 5/5, Controls 8/8). Các mục trước đó là lịch sử theo môi trường/phiên chạy, không phải trạng thái hiện tại.
 
 ## Kết quả Giai đoạn 1 (Mục 5)
 
@@ -248,3 +248,85 @@ Bằng chứng (VM agent, Postgres 16 cục bộ): `python -m pytest -q tests te
 1. Nếu muốn số đo khái quát hóa sạch: chạy 4 ca hold-out trên bản đang deploy (`f3d8876`) TRƯỚC khi deploy bản sửa, ghi kết quả.
 2. Railway: đặt `LLM_MAX_OUTPUT_TOKENS=6000` (hoặc xóa biến để dùng mặc định), deploy commit mới.
 3. Chạy lại `python scripts/run_dev_cases.py <URL> --out docs/validation/<ngày>/dev_run.json`, 3 nút Verify, rồi 4 ca hold-out; dán kết quả. So với bảng cũ, đặc biệt C07 (quy tắc mới về `depends_on_unknown_fact` có thể làm lật).
+
+---
+
+# Kiểm chứng lại bản sửa 0d027bb — 2026-10-17
+
+**ĐÃ XÁC MINH:** push `0d027bb52b087a06bc498f6c83817581f623ad1f` lên main; Railway deployment `8d92bd32-f1d5-46a2-a196-cbae254bddba` SUCCESS. Đặt `LLM_MAX_OUTPUT_TOKENS=6000` bằng Railway connector trước khi deploy (API xác nhận lưu và áp dụng lần deploy kế tiếp). Giữ nguyên gate, policy, manifest và kỳ vọng; bốn checksum đúng cả working tree lẫn Git blob tại SHA đã kiểm.
+
+Người dùng chọn **triển khai ngay, bỏ baseline hold-out**. Sau các lượt kiểm, người dùng xác nhận **chưa chạy hold-out**. Cả baseline và bốn ca sau sửa đều NOT RUN; agent chỉ hướng dẫn thao tác, không nhận/tìm/đoán/tạo lại nội dung hoặc đáp án kín.
+
+## Kiểm tra xác định
+
+Windows: `.\.venv\Scripts\python.exe -X utf8 -u -m pytest -q tests tests_extra` → **56 passed, 13 skipped in 1.92s** khi không có TEST_DATABASE_URL. Lượt sandbox không trả output đã bị ngắt; kết quả trên là lượt chạy ngoài sandbox. Không dùng DB demo để chạy test DB có thay đổi dữ liệu. **69 PASS và smoke local PASS là kết quả người dùng/Cowork báo từ môi trường khác**, chưa được xác nhận lại đầy đủ trên Windows. Không build lại frontend cục bộ vì không có thay đổi frontend; Docker build Railway SUCCESS.
+
+## Dev LIVE: 9/11
+
+OpenAI và Supabase thật, dữ liệu email giả lập. Chạy đúng script một lượt, không đổi kỳ vọng và không chạy lặp để chọn kết quả. Thời gian 06:37:58–06:41:02 UTC. Có usage ở cả 11 ca, tổng ghi nhận **107.970 token**; không tự ước tính USD khi chưa đặt đơn giá. Mọi ca có NGHI_TRUNG do đã tồn tại nội dung trong cùng DB; cờ này được bộ chấm hiện hữu xem là thông tin, không bỏ qua lời gọi AI. Báo cáo cũ 7/11 được giữ nguyên.
+
+| Ca | Bản trước 77e73ed | Bản sửa 0d027bb | Ghi chú lượt mới |
+|---|---|---|---|
+| C01 | PASS | PASS | — |
+| C02 | PASS | PASS | — |
+| C03 | PASS | PASS | — |
+| C05 | PASS | PASS | — |
+| C06 | FAIL | FAIL | 4. must_cite |
+| C07 | PASS | FAIL | 2. reason_primary |
+| C09 | FAIL | PASS | — |
+| C10 | FAIL | PASS | — |
+| C12 | FAIL | PASS | — |
+| C14 | PASS | PASS | — |
+| C15 | PASS | PASS | — |
+
+Đọc package/audit trong `docs/validation/phase3-0d027bb-20261017/dev-selected-details.json`:
+
+- **C06 vẫn FAIL:** cites D3.1 và D3.2.3.a, thiếu nhóm D3.2.3.b hoặc D5.2.2.b; không sửa kỳ vọng hoặc thêm luật theo mã ca.
+- **C07 từ PASS thành FAIL:** AI trả `depends_on_unknown_fact=false`, `asks_determination=true`, `policy_gap=false`; gate không đổi chọn REQUIRES_HUMAN_AUTHORITY, trong khi kỳ vọng UNKNOWN_FACT. Ca vẫn PENDING_HUMAN, 0 outbox. Quan sát phù hợp với ảnh hưởng của chỉ dẫn mới giới hạn unknown_fact theo thay đổi hướng/tuyến xử lý; chưa có thử nghiệm tách riêng từng thay đổi nên chưa chứng minh quan hệ nhân quả hoàn toàn. General Verify cũng lặp lại lỗi này.
+- **C09 PASS:** policy_gap=false, asks_determination=true, depends_on_unknown_fact=false; lý do chính REQUIRES_HUMAN_AUTHORITY.
+- **C10 PASS:** policy_gap=true, GAP.PHULUC3, câu hỏi có tên Phụ lục 3; lý do chính OUT_OF_POLICY.
+- **C12 PASS:** SUSPECT_INPUT, ESCALATE/REQUIRES_HUMAN_AUTHORITY, 0 outbox; không có response.incomplete trong hai lượt mới. Output usage ở dev là 1914 token, General 1351 token (đều dưới 2000), nên chưa thể quy thành công chỉ cho nâng trần 6000 hoặc coi lỗi cắt token đã bị loại bỏ vĩnh viễn.
+
+Không sửa thêm prompt/logic trong phiên kiểm chứng này. Nhánh AGENT_CALL_FAILED đã đọc trong commit và có test được báo cáo; các lời gọi LIVE chính lần này đều thành công ở mức kỹ thuật nên chưa trực tiếp chứng minh nhánh lỗi SDK bằng lỗi LIVE mới.
+
+## Ba bộ Verify LIVE
+
+| Bộ | Trước | Mới | Thời lượng mới | Token ghi nhận | Run ID |
+|---|---|---|---|---|---|
+| GENERAL | 3/4 | 2/4 | 58720 ms | 39621 | `4e2545c2-76b5-47a0-b457-6f94880e1cb3` |
+| ESCALATION | 3/5 | 5/5 | 71860 ms | 49403 | `0452a109-9168-4c9f-8017-499fd20dffcf` |
+| CONTROLS | 8/8 (service/hook) | 8/8 | 51142 ms | 28172 | `c303da28-c614-45a2-a03f-7c1e3c7f7431` |
+
+General: C01/C12 PASS, C06/C07 FAIL. Escalation: cả C02/C05/C15/C09/C10 PASS. Đây là các kiểm tra xác định; checklist nội dung cần người duyệt vẫn CHƯA DUYỆT. Hai lượt C09/C10 đạt chưa đủ kết luận ổn định hoặc khái quát hóa.
+
+Controls 8/8: bước 1–3 và 5–8 có mode=http, đi qua route/validation/handler FastAPI bằng ASGITransport trong tiến trình. Bước 4 có mode="in-process (lỗi) + http (retry)": sau hook lỗi 0 outbox, retry HTTP200 có đúng 1 outbox. Các mã HTTP và số dòng DB được lưu nguyên trong JSON. Không qua mạng/proxy Railway ở từng bước; không coi hook chèn lỗi là request mạng thật. Test chống giả mạo dấu nội bộ nằm trong 13 test DB bị skip trên Windows; kết quả test đầy đủ ở VM là do người dùng báo cáo, chưa có kiểm tra giả mạo LIVE mới.
+
+Thao tác bấm General Verify bằng công cụ trình duyệt bị lỗi trước dispatch; kiểm tra lịch sử chưa có lượt mới rồi dùng POST `/api/verify/general`, `/escalation`, `/controls`. **Chưa xác minh đủ ba nút UI bằng thao tác trình duyệt.** Không dựng ảnh hoặc kết quả UI để thay thế bằng chứng này.
+
+Có thêm lượt Controls `643cdc26-1a58-46ce-8dbd-5930b7258094` đạt 8/8 xuất hiện trong DB; nguồn kích hoạt chưa xác minh, lưu riêng ở `verify-additional-observed.json`, không gộp vào ba lượt chính. Snapshot sau kiểm: public_used=23/300, verify_used=27/60; bộ đếm có cả lịch sử và lượt bổ sung, không phải chỉ lượt chính. `/api/health/ready`=200, smoke DB=404, paused=false.
+
+## Còn lại
+
+- Bốn hold-out NOT RUN (người dùng xác nhận); hướng dẫn tự chạy, ghi kết quả lần đầu và chỉ gửi bảng đạt/lỗi, không gửi nội dung/đáp án kín. Không chạy Controls đồng thời với hold-out.
+- S6 bản mới NOT RUN; FAIL 1835 ms của bản trước vẫn được giữ nguyên, không chuyển thành PASS. Image secret scan chưa chạy lại.
+- C06 chưa sửa; C07 là hồi quy về lý do chính. Chưa chỉnh thêm chỉ dẫn sau kết quả này. C09/C10 đã đạt ở hai lượt nên chưa phát sinh điều kiện "nếu còn sai" để tiếp tục chỉnh.
+- Giao diện nhân viên vẫn chưa có đăng nhập. Kết quả hiện tại chưa đủ nghiệm thu hoặc xác nhận tổng quát hóa.
+
+## Đầu ra nguyên trạng của lượt dev mới
+
+```text
+C01: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 14962ms
+C02: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 12998ms
+C03: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 15147ms
+C05: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 14645ms
+C06: FAIL | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: ['4. must_cite'] | 18758ms
+C07: FAIL | thực=ESCALATE/REQUIRES_HUMAN_AUTHORITY flags=['NGHI_TRUNG'] | kỳ vọng=ESCALATE/UNKNOWN_FACT | lỗi: ['2. reason_primary'] | 17299ms
+C09: PASS | thực=ESCALATE/REQUIRES_HUMAN_AUTHORITY flags=['NGHI_TRUNG'] | kỳ vọng=ESCALATE/REQUIRES_HUMAN_AUTHORITY | lỗi: - | 15355ms
+C10: PASS | thực=ESCALATE/OUT_OF_POLICY flags=['NGHI_TRUNG'] | kỳ vọng=ESCALATE/OUT_OF_POLICY | lỗi: - | 22134ms
+C12: PASS | thực=ESCALATE/REQUIRES_HUMAN_AUTHORITY flags=['NGHI_TRUNG', 'SUSPECT_INPUT'] | kỳ vọng=ESCALATE/REQUIRES_HUMAN_AUTHORITY | lỗi: - | 24365ms
+C14: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 12591ms
+C15: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗi: - | 15151ms
+
+Bắt đầu 2026-10-17T06:37:58.699334+00:00; xong 2026-10-17T06:41:02.103401+00:00
+Đạt 9/11; tổng token 107970
+```

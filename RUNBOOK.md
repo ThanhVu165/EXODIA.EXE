@@ -116,7 +116,7 @@ curl https://<app>/api/verify-runs
 ```
 Kết quả mỗi lần chạy lưu ở bảng `verify_runs`. Dữ liệu Verify gắn `source=VERIFY` + `verify_run_id`, không hiện trong hàng chờ thật.
 
-General/Escalation dùng cùng service, agent thật, gate và DB của API. Bảng điều khiển hiện gọi các hàm service trực tiếp; kiểm tra lỗi giữa chừng dùng hook trong tiến trình. Vì vậy kết quả của bảng này không chứng minh các mục đã đi qua HTTP `/api/emails`; sai khác với yêu cầu HTTP trong prompt vẫn cần chủ sản phẩm duyệt.
+General/Escalation dùng cùng service, agent thật, gate và DB của API. Từ commit `0d027bb`, Controls bước 1–3 và 5–8 gửi request HTTP qua `httpx.ASGITransport` vào đúng route, validation và handler của app trong tiến trình. Bước 4 chèn lỗi bằng hook, rồi retry qua HTTP. Dấu nội bộ nằm trong ASGI scope, không lấy từ header/IP; các lượt này dùng ngân sách Verify riêng. Kết quả không đo mạng/proxy Railway, và bước chèn lỗi vẫn là kiểm tra trong tiến trình; phải giữ rõ các phạm vi này khi nghiệm thu.
 
 Chạy ba nút Verify lần lượt, không đồng thời với xử lý email khác: kiểm tra điều khiển bật Stop thật và khôi phục sau khi chạy. Stop hủy ca RECEIVED/PROCESSING, giữ hàng chờ PENDING_HUMAN; email mới trong lúc dừng chuyển vào hàng chờ, không gọi AI. Giao diện nhân viên chưa có đăng nhập, chỉ dùng dữ liệu giả lập trong demo.
 

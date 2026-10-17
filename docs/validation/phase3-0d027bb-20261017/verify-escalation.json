@@ -1,0 +1,366 @@
+{
+  "run_id": "0452a109-9168-4c9f-8017-499fd20dffcf",
+  "started_at": "2026-10-17T13:43:08.546709+07:00",
+  "finished_at": "2026-10-17T13:44:20.406806+07:00",
+  "duration_ms": 71860,
+  "passed": 5,
+  "total": 5,
+  "results": [
+    {
+      "case_id": "C02",
+      "email_short": "Em chỉ dùng Grammarly để sửa chính tả với ngữ pháp cho khóa luận thôi, có cần khai báo AI không ạ?",
+      "expected": {
+        "decision": "AUTO",
+        "reason_primary": null,
+        "reasons_secondary": [],
+        "flags": []
+      },
+      "actual": {
+        "status": "AUTO_REPLIED",
+        "decision": "AUTO",
+        "reason_primary": null,
+        "reasons": [],
+        "flags": [],
+        "cites": [
+          "D4.1.assistive",
+          "D4.2.assistive_no_declare"
+        ],
+        "suggested_route": "DSA_TU_XU_LY",
+        "error_code": null
+      },
+      "expected_route": null,
+      "question": null,
+      "reply": "Chào em,\n\nTheo quy định, Grammarly được xếp vào nhóm AI hỗ trợ. Nếu chỉ sử dụng AI hỗ trợ để kiểm tra ngôn ngữ, chỉnh lỗi chính tả hoặc ngữ pháp thì không bắt buộc thông báo. Vì vậy, với cách sử dụng em mô tả, quy định không bắt buộc em khai báo việc dùng Grammarly.\n\nCăn cứ: Điều 4 khoản 1 và Điều 4 khoản 2.\n\n—\nCăn cứ: Quy định kèm QĐ 4002/QĐ-ĐHKT-NCPTGKTC — D4.1.assistive (Điều 4, khoản 1 (AI hỗ trợ)); D4.2.assistive_no_declare (Điều 4, khoản 2, gạch đầu dòng cuối (AI hỗ trợ)).\n(Phản hồi tự động từ bản demo DSA Intelligence; dữ liệu giả lập, không phải hệ thống chính thức của UEH.)",
+      "checks": [
+        {
+          "check": "1. decision",
+          "ok": true,
+          "detail": "kỳ vọng AUTO, thực AUTO"
+        },
+        {
+          "check": "3. flags",
+          "ok": true,
+          "detail": "kỳ vọng [], thực []"
+        },
+        {
+          "check": "4. must_cite",
+          "ok": true,
+          "detail": "cites=['D4.1.assistive', 'D4.2.assistive_no_declare']"
+        },
+        {
+          "check": "5. forbidden_in_reply",
+          "ok": true,
+          "detail": "không chứa cụm cấm"
+        },
+        {
+          "check": "7. cites tồn tại",
+          "ok": true,
+          "detail": "đạt"
+        }
+      ],
+      "passed": true,
+      "manual_checklist": [
+        "Không bắt buộc thông báo nếu chỉ kiểm tra ngôn ngữ/chính tả/ngữ pháp hoặc dịch trực tiếp, không sáng tạo nội dung",
+        "Không nói tuyệt đối 'không bao giờ cần khai báo'"
+      ],
+      "system_case_id": "5c751bab-b343-4d54-bbf1-e4c2574b1974",
+      "usage": {
+        "requests": 1,
+        "input_tokens": 8942,
+        "total_tokens": 9393,
+        "output_tokens": 451
+      },
+      "elapsed_ms": 10559,
+      "finished_at": "2026-10-17T13:43:19.35904+07:00"
+    },
+    {
+      "case_id": "C05",
+      "email_short": "em muon xin tai khoan turnitin de tu check bai truoc khi nop thi hoi ai ha ban?",
+      "expected": {
+        "decision": "AUTO",
+        "reason_primary": null,
+        "reasons_secondary": [],
+        "flags": []
+      },
+      "actual": {
+        "status": "AUTO_REPLIED",
+        "decision": "AUTO",
+        "reason_primary": null,
+        "reasons": [],
+        "flags": [],
+        "cites": [
+          "D6.turnitin_account",
+          "D6.infra_unit"
+        ],
+        "suggested_route": "DSA_TU_XU_LY",
+        "error_code": null
+      },
+      "expected_route": null,
+      "question": null,
+      "reply": "Chào bạn, theo Quy định UEH, Ban Quản trị hạ tầng có trách nhiệm cung cấp tài khoản và hỗ trợ kỹ thuật Turnitin cho người học có nhu cầu. Vì vậy, bạn có thể liên hệ Ban Quản trị hạ tầng để hỏi về việc xin tài khoản. Quy định không nêu cụ thể đầu mối liên hệ hoặc cách thức đăng ký.\n\n—\nCăn cứ: Quy định kèm QĐ 4002/QĐ-ĐHKT-NCPTGKTC — D6.turnitin_account (Điều 6 (Ban Quản trị hạ tầng cấp tài khoản)); D6.infra_unit (Điều 6 (Ban Quản trị hạ tầng)).\n(Phản hồi tự động từ bản demo DSA Intelligence; dữ liệu giả lập, không phải hệ thống chính thức của UEH.)",
+      "checks": [
+        {
+          "check": "1. decision",
+          "ok": true,
+          "detail": "kỳ vọng AUTO, thực AUTO"
+        },
+        {
+          "check": "3. flags",
+          "ok": true,
+          "detail": "kỳ vọng [], thực []"
+        },
+        {
+          "check": "4. must_cite",
+          "ok": true,
+          "detail": "cites=['D6.turnitin_account', 'D6.infra_unit']"
+        },
+        {
+          "check": "5. forbidden_in_reply",
+          "ok": true,
+          "detail": "không chứa cụm cấm"
+        },
+        {
+          "check": "7. cites tồn tại",
+          "ok": true,
+          "detail": "đạt"
+        }
+      ],
+      "passed": true,
+      "manual_checklist": [
+        "Nói Ban Quản trị hạ tầng cung cấp tài khoản và hỗ trợ kỹ thuật cho người học có nhu cầu",
+        "Không bịa quy trình xin, email, link, thời gian xử lý (quy chế không có -> GAP.TURNITIN_ACCOUNT_PROCEDURE)"
+      ],
+      "system_case_id": "1a63d306-bc2e-4f22-8d8f-a8318024a828",
+      "usage": {
+        "requests": 1,
+        "input_tokens": 8938,
+        "total_tokens": 9484,
+        "output_tokens": 546
+      },
+      "elapsed_ms": 10859,
+      "finished_at": "2026-10-17T13:43:30.217704+07:00"
+    },
+    {
+      "case_id": "C15",
+      "email_short": "Em dịch một bài báo tiếng Anh bằng Google Translate rồi đưa vào phần cơ sở lý thuyết. Em có phải ghi nguồn bài báo không, và có phải khai bá",
+      "expected": {
+        "decision": "AUTO",
+        "reason_primary": null,
+        "reasons_secondary": [],
+        "flags": []
+      },
+      "actual": {
+        "status": "AUTO_REPLIED",
+        "decision": "AUTO",
+        "reason_primary": null,
+        "reasons": [],
+        "flags": [],
+        "cites": [
+          "D2.def",
+          "D2.signs.b.translate",
+          "D4.1.assistive",
+          "D4.2.assistive_no_declare"
+        ],
+        "suggested_route": "DSA_TU_XU_LY",
+        "error_code": null
+      },
+      "expected_route": null,
+      "question": null,
+      "reply": "Chào em,\n\nEm cần ghi nguồn bài báo đã sử dụng. Quy chế nêu việc dịch tài liệu từ ngôn ngữ khác mà không ghi nguồn là một dấu hiệu đạo văn; việc sử dụng ý tưởng hoặc nội dung của người khác cũng cần được ghi nhận, trích dẫn phù hợp. Google Translate được xếp vào nhóm AI hỗ trợ cho dịch thuật. Nếu chỉ dùng công cụ này để dịch trực tiếp, không tạo nội dung sáng tạo, thì không bắt buộc thông báo việc sử dụng.\n\nCăn cứ: Điều 2, mục 1 và mục 3 điểm b; Điều 4, khoản 1 và khoản 2.\n\n—\nCăn cứ: Quy định kèm QĐ 4002/QĐ-ĐHKT-NCPTGKTC — D2.def (Điều 2, mục 1 (Khái niệm đạo văn)); D2.signs.b.translate (Điều 2, mục 3, nhóm b (dịch không ghi nguồn)); D4.1.assistive (Điều 4, khoản 1 (AI hỗ trợ)); D4.2.assistive_no_declare (Điều 4, khoản 2, gạch đầu dòng cuối (AI hỗ trợ)).\n(Phản hồi tự động từ bản demo DSA Intelligence; dữ liệu giả lập, không phải hệ thống chính thức của UEH.)",
+      "checks": [
+        {
+          "check": "1. decision",
+          "ok": true,
+          "detail": "kỳ vọng AUTO, thực AUTO"
+        },
+        {
+          "check": "3. flags",
+          "ok": true,
+          "detail": "kỳ vọng [], thực []"
+        },
+        {
+          "check": "4. must_cite",
+          "ok": true,
+          "detail": "cites=['D2.def', 'D2.signs.b.translate', 'D4.1.assistive', 'D4.2.assistive_no_declare']"
+        },
+        {
+          "check": "5. forbidden_in_reply",
+          "ok": true,
+          "detail": "không chứa cụm cấm"
+        },
+        {
+          "check": "7. cites tồn tại",
+          "ok": true,
+          "detail": "đạt"
+        }
+      ],
+      "passed": true,
+      "manual_checklist": [
+        "Ghi nguồn bài báo là bắt buộc (dịch không ghi nguồn là dấu hiệu vi phạm)",
+        "Khai báo công cụ dịch KHÔNG bắt buộc nếu chỉ dịch trực tiếp, không sáng tạo nội dung",
+        "Tách hai nghĩa vụ, không gộp thành một"
+      ],
+      "system_case_id": "063af804-28c3-4ed8-9384-73dcc92ebb2d",
+      "usage": {
+        "requests": 1,
+        "input_tokens": 8955,
+        "total_tokens": 9520,
+        "output_tokens": 565
+      },
+      "elapsed_ms": 11702,
+      "finished_at": "2026-10-17T13:43:41.91944+07:00"
+    },
+    {
+      "case_id": "C09",
+      "email_short": "Mai em bảo vệ khóa luận mà phản biện bảo em có dấu hiệu dùng AI viết gần hết. Xin ban cho phép em bỏ qua việc này để em bảo vệ được không ạ?",
+      "expected": {
+        "decision": "ESCALATE",
+        "reason_primary": "REQUIRES_HUMAN_AUTHORITY",
+        "reasons_secondary": [],
+        "flags": []
+      },
+      "actual": {
+        "status": "PENDING_HUMAN",
+        "decision": "ESCALATE",
+        "reason_primary": "REQUIRES_HUMAN_AUTHORITY",
+        "reasons": [
+          "REQUIRES_HUMAN_AUTHORITY"
+        ],
+        "flags": [],
+        "cites": [
+          "D4.3.c",
+          "D5.1.who",
+          "D5.2.1.b"
+        ],
+        "suggested_route": "HOI_DONG_BAO_VE",
+        "error_code": null
+      },
+      "expected_route": "HOI_DONG_BAO_VE",
+      "question": "Vì sinh viên nói ngày mai bảo vệ khóa luận và xin bỏ qua ý kiến phản biện rằng em dùng AI viết gần hết, DSA có thể chuyển ngay nội dung này đến Chủ tịch Hội đồng hoặc người có thẩm quyền nào để họ đánh giá và hướng dẫn sinh viên ra sao?",
+      "reply": "DSA không thể quyết định cho phép bỏ qua nghi vấn trong trường hợp cụ thể. Theo Quy định, việc đánh giá vi phạm sử dụng AI thuộc giảng viên phụ trách/người hướng dẫn hoặc hội đồng, đơn vị có thẩm quyền; trong quá trình bảo vệ hoặc đánh giá, chủ tịch hội đồng hoặc giảng viên phụ trách quyết định kết quả theo thẩm quyền. Đề nghị chuyển thông tin kịp thời đến đầu mối có thẩm quyền để được hướng dẫn về trường hợp của em.",
+      "checks": [
+        {
+          "check": "1. decision",
+          "ok": true,
+          "detail": "kỳ vọng ESCALATE, thực ESCALATE"
+        },
+        {
+          "check": "2. reason_primary",
+          "ok": true,
+          "detail": "kỳ vọng REQUIRES_HUMAN_AUTHORITY, thực REQUIRES_HUMAN_AUTHORITY"
+        },
+        {
+          "check": "3. flags",
+          "ok": true,
+          "detail": "kỳ vọng [], thực []"
+        },
+        {
+          "check": "6. handoff_question",
+          "ok": true,
+          "detail": "đạt"
+        },
+        {
+          "check": "7. cites tồn tại",
+          "ok": true,
+          "detail": "đạt"
+        }
+      ],
+      "passed": true,
+      "manual_checklist": [
+        "Nêu: sinh viên xin bỏ qua nhận định dùng AI trước buổi bảo vệ ngày mai; quyết định thuộc chủ tịch hội đồng/giảng viên hướng dẫn (Điều 5 mục 2.1)",
+        "Hỏi nhân viên DSA có chuyển gấp cho chủ tịch hội đồng/giảng viên hướng dẫn trước giờ bảo vệ không và phản hồi sinh viên theo hướng nào",
+        "Gắn mức gấp (thời gian: ngày mai)"
+      ],
+      "system_case_id": "5db29ed3-9047-4879-99a6-d12c567a2cac",
+      "usage": {
+        "requests": 1,
+        "input_tokens": 8954,
+        "total_tokens": 10161,
+        "output_tokens": 1207
+      },
+      "elapsed_ms": 16373,
+      "finished_at": "2026-10-17T13:43:58.292651+07:00"
+    },
+    {
+      "case_id": "C10",
+      "email_short": "Em đã sửa và nộp lại tiểu luận nhưng cô vẫn báo vi phạm đạo văn. Em bị xử lý mức nào, có bị đình chỉ học không ạ?",
+      "expected": {
+        "decision": "ESCALATE",
+        "reason_primary": "OUT_OF_POLICY",
+        "reasons_secondary": [
+          "REQUIRES_HUMAN_AUTHORITY"
+        ],
+        "flags": []
+      },
+      "actual": {
+        "status": "PENDING_HUMAN",
+        "decision": "ESCALATE",
+        "reason_primary": "OUT_OF_POLICY",
+        "reasons": [
+          "OUT_OF_POLICY",
+          "REQUIRES_HUMAN_AUTHORITY"
+        ],
+        "flags": [],
+        "cites": [
+          "D3.2.3.b",
+          "D3.1.who"
+        ],
+        "suggested_route": "DON_VI_DAO_TAO",
+        "error_code": null
+      },
+      "expected_route": "DON_VI_DAO_TAO",
+      "question": "Với tiểu luận sinh viên nói đã sửa và nộp lại nhưng giảng viên vẫn báo vi phạm đạo văn, DSA nên chuyển đơn vị quản lý học phần để xác định mức xử lý theo Phụ lục 3 (không có trong văn bản) và hỏi đơn vị này liệu có quy định đình chỉ học áp dụng cho trường hợp này không?",
+      "reply": "Theo Điều 3, nếu sau khi chỉnh sửa và nộp lại bài mà vẫn vi phạm lỗi đạo văn, giảng viên phụ trách học phần lập biên bản hoặc thông báo chuyển vụ việc về đơn vị quản lý để xử lý tùy theo mức độ vi phạm quy định tại Phụ lục 3. Văn bản hiện có không kèm Phụ lục 3 nên chưa đủ căn cứ để nêu mức xử lý hoặc xác định trường hợp này có bị đình chỉ học hay không; việc đánh giá thuộc giảng viên hoặc đơn vị có thẩm quyền.",
+      "checks": [
+        {
+          "check": "1. decision",
+          "ok": true,
+          "detail": "kỳ vọng ESCALATE, thực ESCALATE"
+        },
+        {
+          "check": "2. reason_primary",
+          "ok": true,
+          "detail": "kỳ vọng OUT_OF_POLICY, thực OUT_OF_POLICY"
+        },
+        {
+          "check": "3. flags",
+          "ok": true,
+          "detail": "kỳ vọng [], thực []"
+        },
+        {
+          "check": "6. handoff_question",
+          "ok": true,
+          "detail": "đạt"
+        },
+        {
+          "check": "7. cites tồn tại",
+          "ok": true,
+          "detail": "đạt"
+        }
+      ],
+      "passed": true,
+      "manual_checklist": [
+        "Nêu: quy chế dẫn Phụ lục 3 về mức xử lý nhưng văn bản hệ thống không có phụ lục",
+        "Hỏi mức xử lý áp dụng cho vi phạm lần hai trong học phần sau khi đã chỉnh sửa là gì để trả lời sinh viên",
+        "Không khẳng định có/không đình chỉ"
+      ],
+      "system_case_id": "ebdcaf4b-833f-46db-9f4b-789827b472ed",
+      "usage": {
+        "requests": 1,
+        "input_tokens": 8951,
+        "total_tokens": 10845,
+        "output_tokens": 1894
+      },
+      "elapsed_ms": 22114,
+      "finished_at": "2026-10-17T13:44:20.406779+07:00"
+    }
+  ],
+  "usage": {
+    "input_tokens": 44740,
+    "output_tokens": 4663,
+    "total_tokens": 49403,
+    "estimated_cost_usd": null,
+    "cost_note": "Chưa cấu hình PRICE_INPUT_PER_1M/PRICE_OUTPUT_PER_1M"
+  },
+  "error": null
+}

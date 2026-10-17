@@ -4,7 +4,7 @@
 
 Live URL: https://exodiaexe-production.up.railway.app. Trạng thái và commit đã kiểm chứng được ghi trong `PROGRESS.md`; có URL hoạt động chưa đồng nghĩa tất cả ca nghiệp vụ đều đạt.
 
-Kiểm chứng LIVE ngày 2026-10-17: **11 ca dev đạt 7/11** với OpenAI thật; giữ nguyên lỗi C06/C09/C10/C12 trong `docs/validation/phase3-20261017/dev_run.json`. Chưa nghiệm thu; xem PROGRESS cho Verify và các phần chưa kiểm.
+Kiểm chứng LIVE ngày 2026-10-17 ở commit `0d027bb`: **11 ca dev đạt 9/11** với OpenAI thật; C06 và C07 FAIL, C09/C10/C12 PASS trong lượt này. Báo cáo mới ở `docs/validation/phase3-0d027bb-20261017/`. Giữ nguyên lượt cũ 7/11 trong `docs/validation/phase3-20261017/`; một lượt chưa chứng minh độ ổn định. Chưa nghiệm thu; xem PROGRESS cho Verify và các phần chưa kiểm.
 
 Hệ thống hỗ trợ nhân viên Ban chăm sóc người học (DSA) trả lời email thắc mắc của sinh viên về đạo văn và sử dụng AI
 trong sản phẩm học thuật, dựa trên **nguyên văn** Quy định kèm QĐ 4002/QĐ-ĐHKT-NCPTGKTC của UEH (`policy/QD4002_UEH.md`).
@@ -38,6 +38,6 @@ giới hạn, `docs/AI_USAGE.md` cho việc dùng công cụ AI khi phát triể
 
 Xem `RUNBOOK.md` để nạp `.env.local`, chạy trên Windows/Linux, deploy, chạy 11 ca dev qua HTTP với OpenAI thật và ba nút Verify. Verify có hạn mức riêng; mọi email của bộ dev/Verify đều là dữ liệu giả lập.
 
-Các test dùng FixedAgent chỉ xác minh cơ chế trạng thái, DB và audit; kết quả phân loại cần được xác minh bằng model thật. Bảng kiểm tra điều khiển hiện kiểm tra tầng service và hook lỗi trong tiến trình, chưa phải kiểm thử đầy đủ qua HTTP. Bốn ca hold-out do người giữ bộ ca tự chạy, không cung cấp cho agent.
+Các test dùng FixedAgent chỉ xác minh cơ chế trạng thái, DB và audit; kết quả phân loại cần được xác minh bằng model thật. Controls hiện đi qua route HTTP bằng ASGITransport trong tiến trình; bước 4 dùng hook lỗi rồi retry qua HTTP. Bộ này không đo mạng/proxy Railway. Bốn ca hold-out do người giữ bộ ca tự chạy, không cung cấp cho agent.
 
 Giao diện nhân viên hiện không có đăng nhập; người biết URL có thể thao tác Stop/Hủy/Override. Stop hủy ca đang xử lý dở và giữ hàng chờ nhân viên. Đây là giới hạn của demo, không phải mô hình phân quyền để triển khai nghiệp vụ thật.

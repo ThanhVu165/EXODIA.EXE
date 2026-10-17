@@ -1,0 +1,21 @@
+{
+  "paused": false,
+  "paused_info": {
+    "value": {
+      "by": "verify",
+      "on": false,
+      "reason": "Verify: kết thúc kiểm tra số 5"
+    },
+    "updated_at": "2026-10-17 06:45:36.374491+00:00"
+  },
+  "policy_version": "88f6558841b2410d2882dd63c0a15f2b07afc1c8a7f2a2c74d2a98da1cb7e105",
+  "model_configured": "gpt-6-luna",
+  "llm_ready": true,
+  "budget": {
+    "public_used": 23,
+    "public_cap": 300,
+    "verify_used": 27,
+    "verify_cap": 60
+  },
+  "synthetic_demo": true
+}
