@@ -51,7 +51,8 @@ async def smoke_db_write(request: Request, x_smoke_token: str | None = Header(de
         "db": describe_database_url(db.url),
         "client_ssl_in_use": ssl_in_use,
         "written_id": str(row_id),
-        "read_back": {"id": str(read_back[0]), "note": read_back[1], "created_at": read_back[2].isoformat()},
+        "read_back": {"id": str(read_back["id"]), "note": read_back["note"],
+                      "created_at": read_back["created_at"].isoformat()},
     }
 
 
@@ -65,9 +66,10 @@ async def smoke_db_read(request: Request, x_smoke_token: str | None = Header(def
     async with db.pool.connection(timeout=5) as conn:
         await conn.execute(SMOKE_TABLE_DDL)
         cur = await conn.execute(
-            "SELECT count(*), min(created_at), max(created_at) FROM smoke_check"
+            "SELECT count(*) AS n, min(created_at) AS oldest, max(created_at) AS newest FROM smoke_check"
         )
-        count, oldest, newest = await cur.fetchone()
+        row = await cur.fetchone()
+        count, oldest, newest = row["n"], row["oldest"], row["newest"]
         cur = await conn.execute(
             "SELECT id FROM smoke_check ORDER BY created_at ASC LIMIT 1"
         )
@@ -75,7 +77,7 @@ async def smoke_db_read(request: Request, x_smoke_token: str | None = Header(def
     return {
         "db": describe_database_url(db.url),
         "row_count": count,
-        "oldest_id": str(first[0]) if first else None,
+        "oldest_id": str(first["id"]) if first else None,
         "oldest_created_at": oldest.isoformat() if oldest else None,
         "newest_created_at": newest.isoformat() if newest else None,
     }

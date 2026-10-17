@@ -65,3 +65,24 @@ Sửa tối thiểu: `backend/app/event_loop.py` (`selector_loop_factory`), dùn
 
 ## Checkpoint
 - [x] Commit "phase1: infra smoke skeleton" (danh tính git đặt cục bộ trong repo theo đồng ý của người dùng; chưa push).
+
+---
+
+# GIAI ĐOẠN 2 — Nghiệp vụ
+
+**Quyết định của người dùng (2026-10-17):** "bỏ qua, đi tiếp" — S6 được người dùng **cho qua** (waived), KHÔNG phải PASS; rủi ro event loop vẫn ghi nhận ở trên.
+
+Phân chia checkpoint (C, do agent đề xuất vì BUILD_PROMPT không định nghĩa nội dung 2a–2e):
+- 2a: schema DB + nguồn chính sách duy nhất (hash, trích nguyên văn theo mã)
+- 2b: agent + tiền lọc injection + gate + endpoint xử lý email (+ script chạy 11 ca dev — cần OpenAI)
+- 2c: idempotency 3 lớp, audit, tạm dừng / hủy / override / trả lời của nhân viên
+- 2d: ngân sách & giới hạn tần suất, giao diện
+- 2e: Verify (General, Escalation) + bảng kiểm tra điều khiển
+
+Môi trường agent không gọi được OpenAI và Supabase ⇒ mọi kiểm chứng cần LLM thật là BLOCKED tại đây; test DB chạy trên Postgres 16 cục bộ qua `TEST_DATABASE_URL`.
+
+## 2a — xong
+- `backend/app/schema.sql` (cases, outbox, audit_log, usage_counters, system_flags, verify_runs). Ràng buộc: `cases.submission_key` UNIQUE; `outbox` UNIQUE(case_id, kind, version) + UNIQUE(idempotency_key); trigger chặn UPDATE/DELETE trên `audit_log`; DDL chạy dưới advisory lock.
+- `backend/app/policy.py`: version = sha256 file policy; `paragraph_for(code)` trích nguyên văn đoạn chứa anchor.
+- Pool psycopg: `autocommit=True` + transaction tường minh (phát hiện khi test: không autocommit thì lỗi giữa chừng làm mất INSERT trước đó trong cùng kết nối).
+- Bằng chứng: `python -m pytest -q tests` → `27 passed` (gồm 2 test DB thật trên Postgres cục bộ: UNIQUE, append-only, 5 claim đồng thời chỉ 1 thành công).
