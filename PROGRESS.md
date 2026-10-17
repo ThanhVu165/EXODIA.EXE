@@ -28,6 +28,31 @@ Môi trường chạy: VM cục bộ (Python 3.12.14 qua uv, Node 22.23.2). Post
 **Nguyên nhân gốc lỗi Uvicorn mặc định trên Windows** (đã đọc mã nguồn): `uvicorn/loops/asyncio.py` trả `ProactorEventLoop` trên win32 khi không reload/subprocess; `psycopg/connection_async.py` từ chối `ProactorEventLoop`. Chỉ ảnh hưởng chạy cục bộ trên Windows; Linux/Docker/Railway dùng SelectorEventLoop nên không bị.
 Sửa tối thiểu: `backend/app/event_loop.py` (`selector_loop_factory`), dùng qua `--loop app.event_loop:selector_loop_factory` (đã đưa vào `smoke_local.py` và `RUNBOOK.md`). `CMD` của Dockerfile giữ nguyên. Đã chạy lại trên Linux: 21 test pass, smoke_local pass với cờ mới. **Chưa chạy trên Windows** — người dùng cần xác nhận bằng lệnh Uvicorn có cờ `--loop`.
 
+## Kết quả Railway do NGƯỜI DÙNG báo cáo (agent chưa kiểm chứng trực tiếp)
+
+| Mục | Kết quả | Bằng chứng do người dùng báo |
+|---|---|---|
+| S1 Docker build Railway | PASS | build thành công, deployment SUCCESS (cần đính kèm log build) |
+| S2 Giao diện/API | PASS | trang chủ, ping, live, SPA fallback; /api không tồn tại → 404 JSON |
+| S3 Supabase | PASS | ghi/đọc đúng; cổng 5432, SSL bật |
+| S4 LLM thật | PASS (cần xác nhận) | `gpt-6-luna`, parse đúng AgentOutput, 3,153 s, 583 token. **Cần xác nhận `returned_model`** (smoke_remote in trường này) |
+| S5 Readiness | PASS | /api/health/ready 200, frontend và DB OK |
+| S6 Live < 1 s khi gọi LLM | **FAIL theo tiêu chí đã ghi** | 4 mẫu, max 1.835 (đơn vị ghi trong báo cáo là "ms", nhưng theo ngữ cảnh có lẽ là 1 835 ms; cần xác nhận đơn vị) so với ngưỡng 1 000 ms |
+| S7 Bundle công khai | PASS | quét index + 7 asset; chưa quét image Docker |
+| S8 Sau redeploy | PASS | oldest_id giữ nguyên; 5 dòng |
+
+**Trạng thái S6:** FAIL, chưa kết luận event loop bị chặn. Lý do:
+- Ngưỡng 1 s đo từ máy người dùng tới Railway, nên bao gồm RTT mạng và proxy, không chỉ thời gian server xử lý.
+- 4 mẫu trong ~3,15 s nghĩa là mỗi lần probe trung bình ~0,5–0,7 s, gợi ý đường mạng đã chậm sẵn; chưa có probe nền (idle) để so sánh.
+- Mã gọi LLM là async (AsyncOpenAI + httpx async), không có lời gọi đồng bộ trong đường này. Đây là lý giải, chưa phải bằng chứng.
+- Không đổi ngưỡng để qua test. Chỉ được chuyển S6 thành PASS khi có số đo phân tách được mạng và blocking.
+
+**Chẩn đoán đề xuất (chưa chạy):**
+1. Đo probe nền: 20 lần `/api/health/live` khi không có LLM, từ cùng máy; ghi p50/p95/max.
+2. Chạy `smoke_remote.py --llm` 3–5 lần; ghi toàn bộ mẫu live, không chỉ max.
+3. Đo blocking phía server: một endpoint probe ghi độ trễ của `asyncio.sleep(0.1)` trong lúc LLM chạy (loop lag). Loop lag < 50 ms khi LLM đang chạy là bằng chứng không bị chặn; loop lag cao mới là blocking thật.
+4. Xem log Railway cùng thời điểm để loại trừ cold start hoặc proxy.
+
 ## BLOCKED và việc người dùng cần làm
 1. Quyết định về tên file Brief (`BRIEF_` vs `Brief_`) — xem `docs/PREFLIGHT.md` ghi chú B. Nếu không sửa, test toàn vẹn sẽ FAIL trên Linux/CI.
 2. Cấu hình git (danh tính commit) hoặc cho phép agent commit — repo chưa có commit nào.
