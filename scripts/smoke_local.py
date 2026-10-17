@@ -52,7 +52,8 @@ class Server:
         self.log = tempfile.NamedTemporaryFile(prefix=f"smoke_{label}_", suffix=".log", delete=False)
         self.proc = subprocess.Popen(
             [py, "-m", "uvicorn", "app.main:app", "--app-dir", str(ROOT / "backend"),
-             "--host", "127.0.0.1", "--port", str(self.port), "--workers", "1"],
+             "--host", "127.0.0.1", "--port", str(self.port), "--workers", "1",
+             "--loop", "app.event_loop:selector_loop_factory"],  # cần cho psycopg async trên Windows
             env=env, stdout=self.log, stderr=subprocess.STDOUT)
         deadline = time.time() + 30
         while time.time() < deadline:

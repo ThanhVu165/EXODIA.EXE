@@ -18,6 +18,16 @@ Môi trường chạy: VM cục bộ (Python 3.12.14 qua uv, Node 22.23.2). Post
 | S8 | — | cần Railway | **CHỜ NGƯỜI DÙNG** (theo `RUNBOOK.md`). Script `smoke_remote.py` đã chạy thử với server cục bộ: bắt được dữ liệu còn sau khi khởi động lại; và **FAIL đúng** tiêu chí S3 khi DB không phải Supabase/SSL/5432 |
 | — | `python -m pytest -q tests` | `21 passed` (toàn vẹn ground truth 4 checksum + 43 anchor, khung app, cấm cổng 6543, HEAD, schema strict) | PASS |
 
+## Cập nhật sau Giai đoạn 1 (2026-10-17)
+
+**Do NGƯỜI DÙNG báo cáo, agent KHÔNG tự chạy/chứng kiến** (agent không tới được Supabase): trên máy Windows của người dùng với `.env.local` đã sửa (bỏ ngoặc quanh mật khẩu, thêm `sslmode=require`):
+- S3 PASS: ghi và đọc lại bản ghi smoke qua cổng 5432, SSL bật.
+- S5 PASS: `/api/health/ready` 200.
+- Lưu ý của người dùng: lần kiểm tra dùng event loop tương thích Windows; lệnh Uvicorn mặc định vẫn lỗi. Chưa kiểm OpenAI (S4, S6 thật) và Railway (S1, S8).
+
+**Nguyên nhân gốc lỗi Uvicorn mặc định trên Windows** (đã đọc mã nguồn): `uvicorn/loops/asyncio.py` trả `ProactorEventLoop` trên win32 khi không reload/subprocess; `psycopg/connection_async.py` từ chối `ProactorEventLoop`. Chỉ ảnh hưởng chạy cục bộ trên Windows; Linux/Docker/Railway dùng SelectorEventLoop nên không bị.
+Sửa tối thiểu: `backend/app/event_loop.py` (`selector_loop_factory`), dùng qua `--loop app.event_loop:selector_loop_factory` (đã đưa vào `smoke_local.py` và `RUNBOOK.md`). `CMD` của Dockerfile giữ nguyên. Đã chạy lại trên Linux: 21 test pass, smoke_local pass với cờ mới. **Chưa chạy trên Windows** — người dùng cần xác nhận bằng lệnh Uvicorn có cờ `--loop`.
+
 ## BLOCKED và việc người dùng cần làm
 1. Quyết định về tên file Brief (`BRIEF_` vs `Brief_`) — xem `docs/PREFLIGHT.md` ghi chú B. Nếu không sửa, test toàn vẹn sẽ FAIL trên Linux/CI.
 2. Cấu hình git (danh tính commit) hoặc cho phép agent commit — repo chưa có commit nào.

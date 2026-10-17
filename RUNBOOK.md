@@ -23,6 +23,8 @@ cd frontend && npm ci && npm run build && cd ..
 python -m pytest -q tests
 # Đặt biến môi trường từ .env.local rồi:
 uvicorn app.main:app --app-dir backend --port 8000 --workers 1
+# WINDOWS: thêm --loop app.event_loop:selector_loop_factory (psycopg async không chạy trên ProactorEventLoop mặc định của uvicorn).
+# Linux/Docker/Railway: không cần.
 ```
 
 ## Smoke test cục bộ
