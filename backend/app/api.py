@@ -191,3 +191,29 @@ async def pause(payload: PauseIn, request: Request):
     except ServiceError as e:
         return err(e)
     return res
+
+
+# ---------------------------------------------------------------------------------------------- Verify
+from . import verify  # noqa: E402
+
+VERIFY_PER_MIN = 4
+
+
+@router.post("/verify/{kind}")
+async def run_verify(kind: str, request: Request):
+    ctx = ctx_of(request)
+    kinds = {"general": "GENERAL", "escalation": "ESCALATION", "controls": "CONTROLS"}
+    if kind not in kinds:
+        return JSONResponse({"error": {"code": "not_found"}}, status_code=404)
+    try:
+        await rate_limit(request, ctx, "verify", VERIFY_PER_MIN)
+        if kinds[kind] == "CONTROLS":
+            return await verify.run_controls(ctx)
+        return await verify.run_cases(ctx, kinds[kind])
+    except ServiceError as e:
+        return err(e)
+
+
+@router.get("/verify-runs")
+async def verify_runs(request: Request, limit: int = 10):
+    return {"runs": await verify.latest_runs(ctx_of(request), max(1, min(limit, 50)))}

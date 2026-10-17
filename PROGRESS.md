@@ -98,3 +98,9 @@ Môi trường agent không gọi được OpenAI và Supabase ⇒ mọi kiểm 
 - Bằng chứng: `python -m pytest -q tests tests_extra` → **67 passed** (gate, prefilter gồm 8 email hợp lệ có cụm giống injection, và 9 test dịch vụ trên Postgres thật dùng `FixedAgent` chỉ-trong-test: 1 outbox/ca, replay không gọi lại agent, 409 khi đổi nội dung, NGHI_TRUNG, lỗi chèn giữa chừng → retry đúng 1 outbox, 5 request đồng thời cùng khóa → 1 lần gọi agent, tạm dừng, lỗi kỹ thuật không AUTO, hủy/trả lời/override).
 - HTTP thật (server cục bộ, không có OpenAI): `POST /api/emails` → `ERROR LLM_NOT_CONFIGURED`, không outbox; cùng khóa khác nội dung → 409; thiếu khóa → 400.
 - **11 ca dev qua OpenAI thật: BLOCKED** (agent không gọi được OpenAI). Người dùng chạy: `python scripts/run_dev_cases.py <URL> --out dev_run.json` và dán kết quả.
+
+## 2e (backend) — Verify
+- `verify_checks.py`: 7 kiểm tra xác định đọc từ `cases_dev.yaml` (không nhánh theo mã ca); `reply_should`/`question_should` chỉ hiển thị.
+- `verify.py`: General (4 ca) và Escalation (5 ca) gọi `service.process_email` với `source=VERIFY`, hạn mức `llm:verify`; lưu `verify_runs` (dấu thời gian, id lần chạy, thời lượng, token, chi phí ước tính nếu đặt đơn giá).
+- Bảng kiểm tra điều khiển 8 mục. **Lệch so với BUILD_PROMPT (C, cần người dùng duyệt):** các mục chạy qua CÙNG hàm service mà API gọi (mode=service) chứ không gửi HTTP vào chính server, vì giới hạn tần suất theo IP và để dùng hạn mức Verify riêng; mục 4 dùng hook trong tiến trình (mode=in-process). Mục 5 bật/tắt công tắc tạm dừng thật — nếu có người dùng khác đang xử lý đúng lúc đó, ca của họ có thể bị hủy (Stop hủy ca đang chạy dở).
+- Bằng chứng cơ chế: test `test_controls_all_pass_with_auto_agent` (FixedAgent chỉ trong test) → 8/8; tổng `68 passed`. Chạy Verify với OpenAI thật: BLOCKED tại đây.
