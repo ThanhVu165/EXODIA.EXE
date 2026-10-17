@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, ApiError, fmtTime, Json, REASON_VI } from "../lib/api";
 import { ProcessForm } from "./ProcessForm";
 
@@ -85,14 +85,64 @@ function Controls({ run }: { run: Json }) {
   );
 }
 
+const KIND_TITLE: Record<string, string> = {
+  general: "Bảng chính — 4 ca nghiệp vụ",
+  escalation: "Escalation Verify — 5 ca",
+  controls: "Bảng kiểm tra điều khiển (không tính vào 4 ca)",
+};
+const KIND_RUNNING: Record<string, string> = {
+  general: "Đang chạy 4 ca qua AI thật…",
+  escalation: "Đang chạy 5 ca qua AI thật…",
+  controls: "Đang chạy 8 kiểm tra điều khiển…",
+};
+
+function RunBody({ kind, run }: { kind: string; run: Json }) {
+  if (kind === "controls") return <Controls run={run} />;
+  return (
+    <>
+      {kind === "escalation" && (
+        <p>Chuyển tiếp: <b>{run.results.filter((r: Json) => r.actual.decision === "ESCALATE").map((r: Json) => r.case_id).join(", ") || "không có"}</b> · Tự động: <b>{run.results.filter((r: Json) => r.actual.decision === "AUTO").map((r: Json) => r.case_id).join(", ") || "không có"}</b></p>
+      )}
+      <CaseRuns run={run} escalationView={kind === "escalation"} />
+    </>
+  );
+}
+
+/** Bảng kết quả bật lên ở đáy màn hình ngay khi bấm Verify; đóng bằng nút hoặc phím Esc. */
+function ResultSheet({ kind, run, busy, err, onClose }: { kind: string; run?: Json; busy: boolean; err: string | null; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !busy) onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [busy, onClose]);
+  return (
+    <div className="sheet-backdrop" onClick={() => { if (!busy) onClose(); }}>
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={KIND_TITLE[kind]} onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-head">
+          <h3 style={{ margin: 0 }}>{KIND_TITLE[kind]}</h3>
+          {run && !busy && <span className={run.passed === run.total ? "pass" : "fail"}>{run.passed}/{run.total} đạt</span>}
+          <button className="secondary" disabled={busy} onClick={onClose}>Đóng</button>
+        </div>
+        <div className="sheet-body">
+          {busy && <p>{KIND_RUNNING[kind]} Vui lòng chờ, kết quả sẽ hiện ở đây.</p>}
+          {!busy && err && <p className="error-box">{err}</p>}
+          {!busy && run && <RunBody kind={kind} run={run} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function VerifyPanel({ onOpen }: { onOpen?: (id: string) => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [runs, setRuns] = useState<Record<string, Json>>({});
   const [err, setErr] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<string | null>(null);
 
   async function run(kind: string) {
     setBusy(kind);
     setErr(null);
+    setSheet(kind);
     try {
       const r = await api<Json>(`/api/verify/${kind}`, { method: "POST" });
       setRuns((x) => ({ ...x, [kind]: r }));
@@ -107,24 +157,27 @@ export function VerifyPanel({ onOpen }: { onOpen?: (id: string) => void }) {
     <>
       <div className="card">
         <h2>Verify — một lần bấm</h2>
-        <p className="muted">Chạy đúng đường nghiệp vụ thật (cùng dịch vụ, cùng AI, cùng bộ quy tắc, cùng cơ sở dữ liệu). Không có kết quả dựng sẵn. Mỗi ca mất vài giây vì gọi AI thật.</p>
+        <p className="muted">Chạy đúng đường nghiệp vụ thật (cùng dịch vụ, cùng AI, cùng bộ quy tắc, cùng cơ sở dữ liệu). Không có kết quả dựng sẵn. Mỗi ca mất vài giây vì gọi AI thật. Kết quả bật lên ở cuối màn hình.</p>
         <div className="row">
           <button disabled={!!busy} onClick={() => run("general")}>{busy === "general" ? "Đang chạy 4 ca…" : "Chạy Verify (4 ca)"}</button>
           <button disabled={!!busy} onClick={() => run("escalation")}>{busy === "escalation" ? "Đang chạy 5 ca…" : "Escalation Verify (5 ca)"}</button>
           <button className="secondary" disabled={!!busy} onClick={() => run("controls")}>{busy === "controls" ? "Đang chạy…" : "Kiểm tra điều khiển"}</button>
         </div>
-        {err && <p className="error-box">{err}</p>}
+        {Object.keys(runs).length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <div className="section-label">Kết quả gần nhất (bấm để xem lại)</div>
+            <div className="row">
+              {(["general", "escalation", "controls"] as const).filter((k) => runs[k]).map((k) => (
+                <button key={k} className="linklike" onClick={() => { setErr(null); setSheet(k); }}>
+                  {KIND_TITLE[k]}: {runs[k].passed}/{runs[k].total} đạt · {fmtTime(runs[k].finished_at)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-      {runs.general && <div className="card"><h3>Bảng chính — 4 ca nghiệp vụ</h3><CaseRuns run={runs.general} escalationView={false} /></div>}
-      {runs.escalation && (
-        <div className="card">
-          <h3>Escalation Verify — 5 ca</h3>
-          <p>Chuyển tiếp: <b>{runs.escalation.results.filter((r: Json) => r.actual.decision === "ESCALATE").map((r: Json) => r.case_id).join(", ") || "không có"}</b> · Tự động: <b>{runs.escalation.results.filter((r: Json) => r.actual.decision === "AUTO").map((r: Json) => r.case_id).join(", ") || "không có"}</b></p>
-          <CaseRuns run={runs.escalation} escalationView />
-        </div>
-      )}
-      {runs.controls && <div className="card"><h3>Bảng kiểm tra điều khiển (không tính vào 4 ca)</h3><Controls run={runs.controls} /></div>}
       <ProcessForm onOpen={onOpen} />
+      {sheet && <ResultSheet kind={sheet} run={runs[sheet]} busy={busy === sheet} err={busy ? null : err} onClose={() => setSheet(null)} />}
     </>
   );
 }
