@@ -20,6 +20,17 @@ class Settings:
     smoke_token: str | None
     llm_timeout_s: float
     llm_max_output_tokens: int
+    max_email_chars: int
+    llm_daily_cap: int          # trần toàn cục lượt gọi LLM/ngày cho email công khai (hàng rào thật)
+    verify_daily_cap: int       # hạn mức riêng cho Verify
+    rate_per_ip_per_min: int    # giới hạn theo IP (IP có thể bị giả mạo -> chỉ là lớp phụ)
+    lease_seconds: int          # thời hạn giữ ca ở PROCESSING trước khi cho phép tiếp quản
+    price_input_per_1m: float | None   # đơn giá USD/1M token (để ước tính chi phí; không đặt => không ước tính)
+    price_output_per_1m: float | None
+
+
+def _float_or_none(v: str | None) -> float | None:
+    return float(v) if v not in (None, "") else None
 
 
 def load_settings() -> Settings:
@@ -31,6 +42,13 @@ def load_settings() -> Settings:
         smoke_token=os.environ.get("SMOKE_TOKEN") or None,
         llm_timeout_s=float(os.environ.get("LLM_TIMEOUT_S", "60")),
         llm_max_output_tokens=int(os.environ.get("LLM_MAX_OUTPUT_TOKENS", "2000")),
+        max_email_chars=int(os.environ.get("MAX_EMAIL_CHARS", "4000")),
+        llm_daily_cap=int(os.environ.get("LLM_DAILY_CAP", "300")),
+        verify_daily_cap=int(os.environ.get("VERIFY_DAILY_CAP", "60")),
+        rate_per_ip_per_min=int(os.environ.get("RATE_PER_IP_PER_MIN", "6")),
+        lease_seconds=int(os.environ.get("LEASE_SECONDS", "180")),
+        price_input_per_1m=_float_or_none(os.environ.get("PRICE_INPUT_PER_1M")),
+        price_output_per_1m=_float_or_none(os.environ.get("PRICE_OUTPUT_PER_1M")),
     )
 
 

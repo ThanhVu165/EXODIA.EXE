@@ -86,3 +86,15 @@ Môi trường agent không gọi được OpenAI và Supabase ⇒ mọi kiểm 
 - `backend/app/policy.py`: version = sha256 file policy; `paragraph_for(code)` trích nguyên văn đoạn chứa anchor.
 - Pool psycopg: `autocommit=True` + transaction tường minh (phát hiện khi test: không autocommit thì lỗi giữa chừng làm mất INSERT trước đó trong cùng kết nối).
 - Bằng chứng: `python -m pytest -q tests` → `27 passed` (gồm 2 test DB thật trên Postgres cục bộ: UNIQUE, append-only, 5 claim đồng thời chỉ 1 thành công).
+
+## 2b + 2c — mã xong; phần cần LLM thật: BLOCKED tại môi trường agent
+(2b và 2c được viết cùng nhau vì idempotency/hành động nhân viên nằm trên cùng đường xử lý; ghi chung một commit.)
+- `prompts.py` (chỉ dẫn do agent viết, không chứa email ground truth), `prefilter.py` (mẫu injection có mã, bản có dấu + không dấu), `gate.py` (thứ tự lý do, chặn draft khi nghi vấn, cụm cấm, câu hỏi không chung chung), `agent.py` (Agents SDK, max_turns=1, không tool, ánh xạ lỗi kỹ thuật), `service.py` (tiếp nhận, claim nguyên tử có lease, retry một lần khi mã sai, finalize một transaction, tái dùng đầu ra đã validate khi retry bước thực thi, Stop/Hủy/Trả lời/Override), `budget.py` (bộ đếm trong Postgres), `api.py`.
+- Quyết định thiết kế (C) đáng chú ý:
+  - Khi tạm dừng: KHÔNG gọi LLM; ca vào `PENDING_HUMAN` + `PAUSED`. Bật Stop còn hủy ca đang `RECEIVED/PROCESSING` để chúng không tự ghi outbox sau thời điểm dừng.
+  - Mã điều khoản sai sau 1 retry → `ERROR INVALID_CLAUSE_CODE`; không có lý do nhưng thiếu cites/draft → `ERROR AGENT_OUTPUT_INCOMPLETE`; có lý do nhưng câu hỏi không đạt sau retry → vẫn ESCALATE với câu hỏi do gate soạn + cờ `HANDOFF_QUESTION_INVALID`.
+  - Phản hồi AUTO được nối chân trang căn cứ do code sinh (mã + vị trí điều khoản) và nhãn bản demo.
+  - Cờ `NGHI_TRUNG` chỉ mang tính thông tin, không tham gia so khớp flags khi chấm.
+- Bằng chứng: `python -m pytest -q tests tests_extra` → **67 passed** (gate, prefilter gồm 8 email hợp lệ có cụm giống injection, và 9 test dịch vụ trên Postgres thật dùng `FixedAgent` chỉ-trong-test: 1 outbox/ca, replay không gọi lại agent, 409 khi đổi nội dung, NGHI_TRUNG, lỗi chèn giữa chừng → retry đúng 1 outbox, 5 request đồng thời cùng khóa → 1 lần gọi agent, tạm dừng, lỗi kỹ thuật không AUTO, hủy/trả lời/override).
+- HTTP thật (server cục bộ, không có OpenAI): `POST /api/emails` → `ERROR LLM_NOT_CONFIGURED`, không outbox; cùng khóa khác nội dung → 409; thiếu khóa → 400.
+- **11 ca dev qua OpenAI thật: BLOCKED** (agent không gọi được OpenAI). Người dùng chạy: `python scripts/run_dev_cases.py <URL> --out dev_run.json` và dán kết quả.

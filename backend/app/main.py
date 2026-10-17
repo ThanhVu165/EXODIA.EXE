@@ -8,7 +8,15 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 
-from . import smoke
+import os
+
+import psycopg
+from psycopg_pool import PoolTimeout
+
+from . import api, smoke
+from .agent import OpenAIAgentRunner
+from .policy import load_policy
+from .service import Ctx
 from .config import load_settings
 from .db import Database
 
@@ -23,6 +31,11 @@ async def lifespan(app: FastAPI):
     app.state.settings = settings
     app.state.db = Database(settings.database_url)
     await app.state.db.open()
+    policy = load_policy()
+    agent = None
+    if settings.openai_model and os.environ.get("OPENAI_API_KEY"):
+        agent = OpenAIAgentRunner(settings, policy)
+    app.state.ctx = Ctx(db=app.state.db, policy=policy, settings=settings, agent=agent)
     try:
         yield
     finally:
@@ -59,7 +72,28 @@ async def health_ready(request: Request):
                         status_code=200 if ok else 503)
 
 
+
+
+@app.exception_handler(RuntimeError)
+async def runtime_error_handler(request: Request, exc: RuntimeError):
+    # DB chưa cấu hình/không mở được: lỗi kỹ thuật rõ ràng, không bao giờ là kết quả nghiệp vụ.
+    logging.getLogger("dsa").warning("RuntimeError: %s", exc)
+    return JSONResponse({"error": {"code": "SERVICE_UNAVAILABLE", "message": str(exc)[:300]}}, status_code=503)
+
+
+@app.exception_handler(psycopg.Error)
+async def db_error_handler(request: Request, exc: psycopg.Error):
+    logging.getLogger("dsa").exception("DB error")
+    return JSONResponse({"error": {"code": "DB_ERROR", "message": type(exc).__name__}}, status_code=503)
+
+
+@app.exception_handler(PoolTimeout)
+async def pool_timeout_handler(request: Request, exc: PoolTimeout):
+    return JSONResponse({"error": {"code": "DB_UNAVAILABLE", "message": "PoolTimeout"}}, status_code=503)
+
+
 app.include_router(smoke.router)
+app.include_router(api.router)
 
 
 @app.api_route("/api", methods=ALL_METHODS)
