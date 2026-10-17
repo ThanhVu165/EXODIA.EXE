@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AuditTable, CaseDetail, DecisionBadge, OutboxTable } from "../components/CaseView";
+import { OpsReportPanel } from "../components/OpsReportPanel";
 import { ProcessForm } from "../components/ProcessForm";
 import { SatisfactionPanel } from "../components/SatisfactionPanel";
 import { VerifyPanel } from "../components/VerifyPanel";
@@ -12,6 +13,7 @@ const TABS = [
   ["hang-cho", "Hàng chờ nhân viên DSA"],
   ["outbox", "Outbox"],
   ["verify", "Verify"],
+  ["bao-cao", "Báo cáo vận hành"],
   ["danh-gia", "Đánh giá phản hồi (dự đoán)"],
   ["audit", "Nhật ký kiểm toán"],
 ] as const;
@@ -149,6 +151,7 @@ export default function Home() {
         {tab === "hang-cho" && <div className="card"><h2>Hàng chờ nhân viên DSA</h2><p className="muted">Ca chờ người quyết định và ca lỗi kỹ thuật. Dữ liệu Verify không hiển thị ở đây.</p><CaseList key={refresh} view="queue" onOpen={open} /></div>}
         {tab === "outbox" && <div className="card"><h2>Outbox</h2><OutboxTab onOpen={open} /></div>}
         {tab === "verify" && <VerifyPanel onOpen={open} />}
+        {tab === "bao-cao" && <OpsReportPanel onOpen={open} />}
         {tab === "danh-gia" && <SatisfactionPanel onOpen={open} />}
         {tab === "audit" && <div className="card"><h2>Nhật ký kiểm toán</h2><AuditTab onOpen={open} /></div>}
       </main>
