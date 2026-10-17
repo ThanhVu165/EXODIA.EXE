@@ -330,3 +330,30 @@ C15: PASS | thực=AUTO/None flags=['NGHI_TRUNG'] | kỳ vọng=AUTO/None | lỗ
 Bắt đầu 2026-10-17T06:37:58.699334+00:00; xong 2026-10-17T06:41:02.103401+00:00
 Đạt 9/11; tổng token 107970
 ```
+
+
+---
+
+# Hoàn tác quy tắc gây hồi quy C07 — 2026-10-17
+
+**Căn cứ:** BUILD_PROMPT Mục 6 — "nếu một thay đổi làm hỏng checkpoint đã xong thì hoàn tác thay đổi đó, đừng vá lên trên".
+
+**Nguyên nhân gốc C07 (đọc từ `docs/validation/phase3-0d027bb-20261017/dev-selected-details.json`):** AI vẫn liệt kê đúng dữ kiện chưa biết (tỷ lệ tương đồng sau loại trừ; nội dung trùng lặp cụ thể) nhưng đặt `depends_on_unknown_fact=false` và giải thích là "cần chuyển theo tuyến này" — đúng theo câu chữ quy tắc (2) do agent thêm ở `0d027bb` ("dù dữ kiện thế nào vẫn cùng một tuyến ⇒ false; vẫn có thể liệt kê unknown_facts"). Quy tắc này mơ hồ: lấy "tuyến chuyển" làm tiêu chí thay vì việc câu trả lời có phụ thuộc dữ kiện hay không.
+
+**Thay đổi:** xóa nguyên văn quy tắc (2). Định nghĩa `depends_on_unknown_fact` trở về đúng câu chữ ở `4e03a14` (bản mà C07 PASS ở lượt dev và General Verify). Giữ quy tắc (1) về ngoại lệ ≠ khoảng trống và (3) về câu hỏi khi có khoảng trống. Gate, ground truth, kỳ vọng không đổi.
+
+**Hệ quả dự kiến (chưa kiểm chứng LIVE):** C07 có khả năng trở lại PASS; **C09 có khả năng FAIL lại ở `reason_primary`** (UNKNOWN_FACT thay vì REQUIRES_HUMAN_AUTHORITY) vì ở lượt đầu AI cũng bật `depends_on_unknown_fact` cho C09. C09 vẫn ESCALATE nên phép thử 90 giây của Brief (2 chuyển tiếp / 3 tự động) không bị ảnh hưởng; C07 thuộc General Verify (tiêu chí 12 điểm). Đây là đánh đổi có chủ đích, ghi vào giới hạn.
+
+**Đề xuất chưa áp dụng (cần người dùng duyệt và chạy LIVE trước khi coi là cải tiến):** định nghĩa lại `depends_on_unknown_fact` theo tiêu chí "câu trả lời cho câu hỏi của sinh viên sẽ khác nhau tùy dữ kiện chưa biết/chưa xác minh (kể cả số liệu do sinh viên tự nêu); nếu câu trả lời như nhau dù dữ kiện thế nào (ví dụ yêu cầu chỉ người có thẩm quyền mới chấp thuận) thì false". Rủi ro: tiếp tục điều chỉnh theo bộ dev — chỉ nên đánh giá cùng hold-out.
+
+**Bằng chứng tại VM agent:** `python -m pytest -q tests tests_extra` → 69 passed (không kiểm tra hành vi LLM).
+
+## Trạng thái các mục của BUILD_PROMPT không thể hoàn tất bởi agent
+| Mục | Trạng thái | Ai làm |
+|---|---|---|
+| Chạy lại 11 ca dev + 3 Verify trên commit này | NOT RUN (agent không gọi được OpenAI) | Người dùng |
+| 4 ca hold-out | NOT RUN | Người dùng (agent không có dữ liệu) |
+| S6 trên bản nghiệp vụ | NOT RUN; FAIL cũ (1835 ms) giữ nguyên | Người dùng |
+| Quét secret trong image Docker | NOT RUN (agent không build được image) | Người dùng: `docker build -t dsa:local . && python scripts/smoke_local.py --image dsa:local` |
+| Xác minh ba nút Verify bằng thao tác trình duyệt | Chưa xác minh | Người dùng |
+| Slide, video, build log | Không thuộc phạm vi agent (Mục 7) | Người dùng |
