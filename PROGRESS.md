@@ -357,3 +357,31 @@ Bắt đầu 2026-10-17T06:37:58.699334+00:00; xong 2026-10-17T06:41:02.103401+0
 | Quét secret trong image Docker | NOT RUN (agent không build được image) | Người dùng: `docker build -t dsa:local . && python scripts/smoke_local.py --image dsa:local` |
 | Xác minh ba nút Verify bằng thao tác trình duyệt | Chưa xác minh | Người dùng |
 | Slide, video, build log | Không thuộc phạm vi agent (Mục 7) | Người dùng |
+
+
+---
+
+# Lượt dev LIVE trên `cdd97cf` — 2026-10-17 06:55:59–06:58:41 UTC
+
+Nguồn: `docs/validation/phase3-cdd97cf-20261017/dev_run.log` (người dùng chạy; deployment `554aaa29-6533-4e30-b7bd-f60961d4954a` SUCCESS, readiness 200; GitHub `main` = `cdd97cf`).
+
+| Ca | `f3d8876` | `0d027bb` | `cdd97cf` |
+|---|---|---|---|
+| C01, C02, C03, C05, C14, C15 | PASS | PASS | PASS |
+| C06 | FAIL must_cite | FAIL must_cite | FAIL must_cite |
+| C07 | PASS | **FAIL** reason_primary | **PASS** (ESCALATE/UNKNOWN_FACT) |
+| C09 | FAIL reason_primary | PASS | **FAIL** reason_primary (ESCALATE/UNKNOWN_FACT) |
+| C10 | FAIL handoff_question | PASS | PASS |
+| C12 | FAIL (cắt token, ERROR) | PASS | PASS |
+| **Tổng** | 7/11 | 9/11 | **9/11** |
+
+- Kết quả khớp dự đoán khi hoàn tác: C07 trở lại PASS, C09 FAIL lại ở lý do chính nhưng vẫn ESCALATE (phép thử 90 giây của Brief chỉ cần đúng chuyển tiếp/tự động).
+- Token ghi nhận 106.578 cho 11 ca. Mỗi phiên bản mới chỉ có 1 lượt dev ⇒ chưa đủ kết luận độ ổn định.
+- **Hold-out: bỏ qua theo quyết định của người dùng** ⇒ không có số đo khái quát hóa trên dữ liệu chưa thấy.
+- Verify (General/Escalation/Controls) trên `cdd97cf`: chưa có kết quả trong hồ sơ này.
+
+## Giới hạn còn mở (cho Slide 5)
+1. C06: phản hồi tự động trích bước "vi phạm lần đầu" nhưng thiếu bước "vẫn vi phạm sau khi chỉnh sửa" mà bộ ca yêu cầu.
+2. C09: yêu cầu xin ngoại lệ bị xếp lý do chính "thiếu dữ kiện" thay vì "vượt thẩm quyền" (vẫn chuyển cho nhân viên). Sửa bằng chỉ dẫn đã làm hỏng C07; chưa tìm được cách định nghĩa tách được hai ca mà không điều chỉnh theo bộ dev.
+3. Không có kết quả hold-out; mọi số đo là trên 11 ca dev đã dùng để phát triển.
+4. S6 (event loop khi gọi AI) chưa đạt ngưỡng và chưa đo lại; quét secret trong image Docker chưa chạy; giao diện nhân viên không có đăng nhập.
