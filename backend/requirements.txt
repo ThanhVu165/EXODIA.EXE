@@ -1,0 +1,10 @@
+# Runtime (đã ghim theo phiên bản cài thử thành công 2026-10-17)
+fastapi==0.143.3
+uvicorn[standard]==0.54.0
+psycopg[binary]==3.3.6
+psycopg-pool==3.3.3
+openai-agents==0.24.0
+openai==3.33.0
+httpx
+pydantic==2.14.1
+PyYAML

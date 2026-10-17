@@ -1,0 +1,68 @@
+# GROUND TRUTH — DANH MỤC MÃ ĐIỀU KHOẢN (READ-ONLY đối với agent triển khai)
+# Chỉ người dùng (chủ sản phẩm) được sửa file này.
+#
+# Nguồn: policy/QD4002_UEH.md  = nguyên văn Quy định của UEH kèm QĐ số 4002/QĐ-ĐHKT-NCPTGKTC
+#        (18/12/2025), do người dùng lưu nguyên văn, KHÔNG chỉnh sửa.
+# Mỗi `anchor` là một đoạn văn bản nguyên văn (đã chuẩn hóa khoảng trắng) phải tìm thấy trong
+# file chính sách. Test tính toàn vẹn phải kiểm tra: mọi anchor xuất hiện trong policy file.
+# Nếu một anchor không khớp (do khác dấu, xuống dòng...), BÁO CÁO cho người dùng — KHÔNG tự sửa anchor
+# và KHÔNG tự sửa policy file để khớp.
+
+version: 2026-10-17-r2
+policy_file: policy/QD4002_UEH.md
+normalize: "collapse whitespace; so khớp phân biệt dấu tiếng Việt"
+
+clauses:
+  - { id: D2.def,                   locator: "Điều 2, mục 1 (Khái niệm đạo văn)",               anchor: "Đạo văn là hành vi sử dụng trực tiếp hoặc gián tiếp" }
+  - { id: D2.sim,                   locator: "Điều 2, mục 2 (Tỷ lệ tương đồng học thuật)",      anchor: "Tỷ lệ tương đồng học thuật là tỷ lệ phần trăm nội dung trùng lặp trong sản phẩm học thuật" }
+  - { id: D2.sim.notsole,           locator: "Điều 2, mục 2",                                    anchor: "Tỷ lệ tương đồng không phải là căn cứ duy nhất để kết luận đạo văn" }
+  - { id: D2.signs.a,               locator: "Điều 2, mục 3, nhóm a (định lượng 20%)",           anchor: "Có tỷ lệ tương đồng từ 20% trở lên" }
+  - { id: D2.signs.exclusions,      locator: "Điều 2, mục 3, nhóm a (phần không tính)",          anchor: "không tính phần: trích dẫn, danh mục tài liệu tham khảo" }
+  - { id: D2.signs.b.nosource,      locator: "Điều 2, mục 3, nhóm b",                            anchor: "Sao chép nguyên văn nội dung mà không ghi nguồn hoặc không trích dẫn" }
+  - { id: D2.signs.b.translate,     locator: "Điều 2, mục 3, nhóm b (dịch không ghi nguồn)",     anchor: "Dịch tài liệu từ ngôn ngữ khác mà không ghi nguồn" }
+  - { id: D2.signs.c,               locator: "Điều 2, mục 3, nhóm c (tự đạo văn)",               anchor: "Tái sử dụng nội dung đã nộp hoặc đã công bố trước đó mà không trích dẫn" }
+  - { id: D2.signs.d,               locator: "Điều 2, mục 3, nhóm d (lỗi trích dẫn)",            anchor: "Trích dẫn sai, không đầy đủ hoặc sai định dạng nghiêm trọng" }
+  - { id: D3.1,                     locator: "Điều 3, khoản 1",                                  anchor: "Kết quả tỷ lệ tương đồng chỉ mang tính tham khảo, hỗ trợ, không tự động kết luận là đạo văn" }
+  - { id: D3.1.who,                 locator: "Điều 3, khoản 1 (ai đánh giá)",                    anchor: "Việc đánh giá do giảng viên phụ trách/người hướng dẫn hoặc hội đồng/đơn vị có thẩm quyền thực hiện" }
+  - { id: D3.2.1,                   locator: "Điều 3, khoản 2, mục 2.1 (nguyên tắc xử lý)",      anchor: "Đối với lỗi kỹ thuật hoặc sơ suất trong ghi nguồn" }
+  - { id: D3.2.2.a,                 locator: "Điều 3, khoản 2, mục 2.2 điểm a (khóa luận, trước bảo vệ)", anchor: "Khi phát hiện có dấu hiệu đạo văn, người học phải chỉnh sửa, bổ sung và khắc phục theo yêu cầu của giảng viên hướng dẫn hoặc đơn vị quản lý" }
+  - { id: D3.2.2.b,                 locator: "Điều 3, khoản 2, mục 2.2 điểm b (trong khi bảo vệ)", anchor: "chủ tịch hội đồng quyết định luận văn/luận án không đạt" }
+  - { id: D3.2.2.c,                 locator: "Điều 3, khoản 2, mục 2.2 điểm c (sau bảo vệ)",      anchor: "Sau khi đã bảo vệ, nếu có phát hiện lỗi đạo văn" }
+  - { id: D3.2.3.a,                 locator: "Điều 3, khoản 2, mục 2.3 điểm a (học phần, lần đầu)", anchor: "Khi bị phát hiện vi phạm lần đầu, người học phải chỉnh sửa và nộp lại bài theo yêu cầu của giảng viên" }
+  - { id: D3.2.3.b,                 locator: "Điều 3, khoản 2, mục 2.3 điểm b (học phần, vẫn vi phạm)", anchor: "giảng viên phụ trách học phần lập biên bản/thông báo chuyển về đơn vị quản lý để xử lý tùy theo mức độ vi phạm quy định tại Phụ lục 3" }
+  - { id: D4.1,                     locator: "Điều 4, khoản 1 (AI tạo sinh)",                    anchor: "AI tạo sinh (Generative AI), là các hệ thống có khả năng tự tạo nội dung mới" }
+  - { id: D4.1.assistive,           locator: "Điều 4, khoản 1 (AI hỗ trợ)",                      anchor: "AI hỗ trợ (Assistive AI), là các công cụ hoặc tính năng sử dụng AI để hỗ trợ kỹ thuật" }
+  - { id: D4.2.transparency,        locator: "Điều 4, khoản 2, gạch đầu dòng Minh bạch",         anchor: "Minh bạch: ghi rõ công cụ AI tạo sinh đã sử dụng, mục đích sử dụng" }
+  - { id: D4.2.example,             locator: "Điều 4, khoản 2 (câu khai báo mẫu)",               anchor: "Một phần nội dung của sản phẩm này được hỗ trợ bởi ChatGPT" }
+  - { id: D4.2.privacy,             locator: "Điều 4, khoản 2 (quyền riêng tư, bảo mật)",        anchor: "không cung cấp cho AI dữ liệu cá nhân, dữ liệu mật" }
+  - { id: D4.2.assistive_no_declare, locator: "Điều 4, khoản 2, gạch đầu dòng cuối (AI hỗ trợ)", anchor: "Đối với AI hỗ trợ, không bắt buộc thông báo nếu chỉ sử dụng để kiểm tra ngôn ngữ" }
+  - { id: D4.3.a,                   locator: "Điều 4, khoản 3 điểm a",                           anchor: "Sử dụng nội dung do AI tạo ra nhưng không thông báo hoặc thông báo không đầy đủ" }
+  - { id: D4.3.b,                   locator: "Điều 4, khoản 3 điểm b",                           anchor: "Sử dụng AI để tạo ra nội dung nhưng không kiểm tra, xác nhận nguồn hoặc độ chính xác" }
+  - { id: D4.3.c,                   locator: "Điều 4, khoản 3 điểm c",                           anchor: "Sử dụng AI để tạo ra toàn bộ hoặc phần lớn nội dung sản phẩm học thuật" }
+  - { id: D4.3.g,                   locator: "Điều 4, khoản 3 điểm g",                           anchor: "Sử dụng AI trong những trường hợp UEH, giảng viên hoặc hội đồng chuyên môn quy định là không được phép" }
+  - { id: D4.3.h,                   locator: "Điều 4, khoản 3 điểm h",                           anchor: "Sử dụng AI để xử lý dữ liệu nhạy cảm" }
+  - { id: D5.1.notsole,             locator: "Điều 5, khoản 1 (công cụ phát hiện AI)",           anchor: "làm căn cứ duy nhất để kết luận vi phạm học thuật" }
+  - { id: D5.1.who,                 locator: "Điều 5, khoản 1 (ai đánh giá vi phạm AI)",         anchor: "Việc phát hiện và đánh giá vi phạm sử dụng AI trong học thuật do giảng viên phụ trách/người hướng dẫn hoặc hội đồng/đơn vị có thẩm quyền thực hiện" }
+  - { id: D5.2.1.a,                 locator: "Điều 5, khoản 2, mục 2.1 điểm a (trước bảo vệ)",   anchor: "Người học phải chỉnh sửa và khắc phục vi phạm theo yêu cầu của giảng viên hướng dẫn hoặc đơn vị quản lý" }
+  - { id: D5.2.1.b,                 locator: "Điều 5, khoản 2, mục 2.1 điểm b (trong bảo vệ)",   anchor: "chủ tịch hội đồng/giảng viên phụ trách quyết định khóa luận, đề án tốt nghiệp, luận văn, luận án không đạt" }
+  - { id: D5.2.2.a,                 locator: "Điều 5, khoản 2, mục 2.2 điểm a (học phần, lần đầu)", anchor: "Khi bị phát hiện vi phạm lần đầu, người học phải chỉnh sửa và nộp lại bài theo yêu cầu của giảng viên" }
+  - { id: D5.2.2.b,                 locator: "Điều 5, khoản 2, mục 2.2 điểm b (học phần, vẫn vi phạm)", anchor: "Nếu vẫn vi phạm sau khi đã chỉnh sửa, giảng viên phụ trách học phần lập biên bản" }
+  - { id: D6.check,                 locator: "Điều 6 (giảng viên kiểm tra Turnitin)",             anchor: "Kiểm tra ngẫu nhiên hoặc theo yêu cầu đối với bài tập, tiểu luận" }
+  - { id: D6.report,                locator: "Điều 6 (người học thông báo nghi vấn)",             anchor: "Khuyến khích toàn thể người học, viên chức, người lao động của UEH thông báo và cung cấp những bằng chứng" }
+  - { id: D6.lecturer_accountability, locator: "Điều 6 (giảng viên giải trình khi khiếu nại)",   anchor: "Trách nhiệm giải trình: Trong trường hợp có khiếu nại" }
+  - { id: D6.infra_unit,            locator: "Điều 6 (Ban Quản trị hạ tầng)",                    anchor: "Trách nhiệm của Ban Quản trị hạ tầng" }
+  - { id: D6.turnitin_account,      locator: "Điều 6 (Ban Quản trị hạ tầng cấp tài khoản)",      anchor: "Cung cấp tài khoản, hỗ trợ kỹ thuật cho các đơn vị liên quan" }
+  - { id: D6.qa,                    locator: "Điều 6 (Ban Bảo đảm chất lượng và Kiểm soát nội bộ)", anchor: "Phối hợp với các đơn vị liên quan trong việc xem xét, xác minh và xử lý các khiếu nại, tố cáo, phản ánh" }
+
+# Khoảng trống chính sách (OUT_OF_POLICY): văn bản DẪN CHIẾU hoặc NHẮC TỚI nhưng KHÔNG CÓ nội dung.
+# `referenced_anchor` phải tìm thấy trong policy file (là chỗ văn bản nhắc tới); phần còn thiếu thì không có.
+gaps:
+  - id: GAP.PHULUC3
+    description: "Điều 3 mục 2.3 điểm b dẫn Phụ lục 3 về mức xử lý; Phụ lục 3 KHÔNG có trong văn bản. Không được bịa mức xử lý."
+    referenced_anchor: "quy định tại Phụ lục 3"
+  - id: GAP.COMPLAINT_PROCEDURE
+    description: "Điều 6 chỉ nêu khiếu nại được giải quyết theo quy trình nội bộ; KHÔNG có thời hạn, mẫu đơn, trình tự cụ thể."
+    referenced_anchor: "theo quy trình nội bộ của UEH"
+  - id: GAP.TURNITIN_ACCOUNT_PROCEDURE
+    description: "Điều 6 nêu Ban Quản trị hạ tầng cấp tài khoản Turnitin nhưng KHÔNG có quy trình, biểu mẫu, đầu mối liên hệ cụ thể."
+    referenced_anchor: "Cung cấp tài khoản, hỗ trợ kỹ thuật cho các đơn vị liên quan"

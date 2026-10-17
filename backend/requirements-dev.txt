@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest
+# Postgres cục bộ cho kiểm thử trong môi trường không tới được Supabase (KHÔNG thay thế S3)
+pgserver

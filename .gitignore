@@ -1,0 +1,18 @@
+# secrets
+.env
+.env.*
+!.env.example
+# hold-out: người dùng giữ riêng, không bao giờ commit
+holdout/
+**/holdout*
+# build / cache
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+__pycache__/
+.pytest_cache/
+.venv/
+# Windows
+desktop.ini
+Thumbs.db
